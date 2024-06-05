@@ -1,0 +1,7 @@
+name: farmapp
+channels:
+  - defaults
+dependencies:
+  - flask
+  - pandas
+  - gunicorn
