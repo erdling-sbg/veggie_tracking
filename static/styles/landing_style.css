@@ -19,3 +19,8 @@ input {
     min-height: 5vh;
     font-family: Helvetica;
   }
+
+  img {
+    max-width: 50%;
+    height: auto;
+  }
