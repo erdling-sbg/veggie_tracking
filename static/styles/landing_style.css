@@ -1,4 +1,9 @@
-html { background-color: #000; }
+html {
+    background-color: #000;
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+}
 
 body {
     min-height: 100vh;
