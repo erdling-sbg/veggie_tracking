@@ -5,6 +5,7 @@
 
 __pycache__/
 data_csv/
+.DS_Store
 
 # User-specific files
 *.rsuser
