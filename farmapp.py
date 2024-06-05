@@ -43,7 +43,7 @@ def beetID(ID):
     # Fix NaN values to None
     df_result = df_result.where(df_result.notnull(), '')
     pd.set_option('colheader_justify', 'center')
-    return render_template('bed_history.html', tables=[df_result.to_html(classes='mystyle', header="true")])
+    return render_template('bed_history.html', tables=[df_result.to_html(classes='tablestyle', header="true")])
 
 def get_planting_history(ID):
    conn = sqlite3.connect(DATABASE)

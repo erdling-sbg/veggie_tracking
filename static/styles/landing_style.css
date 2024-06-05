@@ -1,0 +1,21 @@
+html { background-color: #000; }
+
+body {
+    min-height: 100vh;
+    background-color: papayawhip; 
+    margin: 0 auto;
+    vertical-align: middle;
+    text-align: center;
+    font-family: Helvetica;
+}
+
+form {
+    display: inline-block;
+}
+
+input {
+    min-width: 30vh;
+    max-width: 400px;
+    min-height: 5vh;
+    font-family: Helvetica;
+  }

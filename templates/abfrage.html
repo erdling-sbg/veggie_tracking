@@ -1,9 +1,15 @@
 <html>
+   <head>
+      <meta charset="UTF-8">
+      <title>Bed History</title>
+  </head>
+   <link rel="stylesheet" type="text/css" href= "{{ url_for('static',filename='styles/landing_style.css') }}">
    <body>      
       <form method = "post">
-<p>BeetID (0-90):</p>
-<p><input type = "text" name = "bid" /></p>
-<p><input type = "submit" value = "submit" /></p>
+         <h1>Was gibt's am Acker?</h1>
+         <h2>BeetID (0-90):</h2>
+         <p><input type = "text" name = "bid" /></p>
+         <p><input type = "submit" value = "Schau ma mal..." /></p>
       </form>      
    </body>
 </html>
