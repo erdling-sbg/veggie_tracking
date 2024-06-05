@@ -8,7 +8,7 @@ DATABASE = 'erdling.db'
 # Routing
 #
 # Receive and check input for bedID number (0-90).
-@app.route('/abfrage',methods = ['POST', 'GET'])
+@app.route('/',methods = ['POST', 'GET'])
 def my_form_post():
     if request.method == 'POST':
         # Validate number as input.
