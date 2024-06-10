@@ -5,13 +5,25 @@
       <title>Bed History</title>
   </head>
    <link rel="stylesheet" type="text/css" href= "{{ url_for('static',filename='styles/landing_style.css') }}">
-   <body>      
+   <body>
+      <div>      
       <form method = "post">
          <h1>Was gibt's am Acker?</h1>
          <h2>BeetID (0-90):</h2>
          <p><input type = "text" name = "bid" /></p>
          <p><input type = "submit" value = "Schau ma mal..." /></p>
       </form>
+   </div>
+      <div>
+         <form method = "post" id="kulturname">
+         <select name="kulturname" form="kulturname">
+            {% for n in name %}
+                <option value="{{n}}">{{ n }}</option>
+            {% endfor %}
+        </select>
+        <p><input type = "submit" value = "...war mal hier" id="kulturname"/></p>
+        </form>
+      </div>
       <div>
          <img src="{{url_for('static', filename='images/erdling_logo.gif')}}" alt="Erdling Logo">
      </div>      
