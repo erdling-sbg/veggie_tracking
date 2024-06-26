@@ -43,7 +43,7 @@ def my_form_post():
 def kulturname(kultur_name):
     crop_cols, crop_data = get_specific_crop(kultur_name)
     df_crop = pd.DataFrame(crop_data, columns=crop_cols)
-    df_crop = df_crop.sort_values(by=['BedID', 'StartDate'], ascending=True)
+    df_crop = df_crop.sort_values(by=['CropName', 'StartDate'], ascending=True)
     df_result = df_crop.where(df_crop.notnull(), '')
     pd.set_option('colheader_justify', 'center')
     h1_str="Crop: {}".format(kultur_name)
