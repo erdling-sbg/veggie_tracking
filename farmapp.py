@@ -47,7 +47,7 @@ def kulturname(kultur_name):
     df_result = df_crop.where(df_crop.notnull(), '')
     pd.set_option('colheader_justify', 'center')
     h1_str="Crop: {}".format(kultur_name)
-    return render_template('crop_location.html', tables=[df_result.to_html(classes='tablestyle', header="true")], h1_string=h1_str)
+    return render_template('crop_location.html', tables=[df_result.to_html(classes=['tablestyle', 'sortable'], header="true")], h1_string=h1_str)
 
 # Go to bedID URL to retrieve info.
 @app.route('/beetID/<ID>', methods=("POST", "GET"))
@@ -66,7 +66,7 @@ def beetID(ID):
     df_result = df_result.where(df_result.notnull(), '')
     pd.set_option('colheader_justify', 'center')
     h1_str="Beet #{}".format(ID)
-    return render_template('bed_history.html', tables=[df_result.to_html(classes='tablestyle', header="true")], h1_string=h1_str)
+    return render_template('bed_history.html', tables=[df_result.to_html(classes=['tablestyle', 'sortable'], header="true")], h1_string=h1_str)
 
 def get_planting_history(ID):
     conn = sqlite3.connect(DATABASE)
