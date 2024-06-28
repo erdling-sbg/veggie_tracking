@@ -82,9 +82,25 @@ def beetID(ID):
     df_result = df_result.sort_values(by=['StartDate', 'CropFamilie', 'CropName'], ascending=False)
     # Fix NaN values to None
     df_result = df_result.where(df_result.notnull(), '')
+    # Figure stuff
+    df_fig = df_result.copy(deep=True)
+    df_fig = df_fig.drop(df_fig[df_fig['ImprovementName'] != ''].index)
+    today = datetime.today().strftime('%Y-%m-%d')
+    year_start = datetime.today().strftime('%Y-01-01')
+    df_fig.loc[((df_fig['StartDate'] >= year_start) & (df_fig['EndDate'] == '')), 'EndDate'] = today
+    fig = px.timeline(df_fig, x_start="StartDate", x_end="EndDate", y="CropName", color="CropFamilie")
+    fig.update_yaxes(autorange="reversed")
+    fig.update_layout({
+        'plot_bgcolor': 'rgb(234,216,192)',
+        'paper_bgcolor': 'rgba(0, 0, 0, 0)',
+    })
+    dia = px.scatter(df_fig, x="StartDate", y="CropName", color="CropFamilie", symbol_sequence=['diamond'])
+    dia.update_traces(marker=dict(size=12, line=dict(width=2)))
+    # Put it all together!
+    new_fig = go.Figure(data=fig.data + dia.data, layout=fig.layout)
     pd.set_option('colheader_justify', 'center')
     h1_str="Beet #{}".format(ID)
-    return render_template('bed_history.html', tables=[df_result.to_html(classes=['tablestyle', 'sortable'], header="true")], h1_string=h1_str)
+    return render_template('bed_history.html', tables=[df_result.to_html(classes=['tablestyle', 'sortable'], header="true")], fig=new_fig.to_html(full_html=False), h1_string=h1_str)
 
 def get_planting_history(ID):
     conn = sqlite3.connect(DATABASE)
