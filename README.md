@@ -46,6 +46,7 @@ You will need the following packages in your python environment as created on py
 
 - flask
 - pandas
+- plotly
 
 
 A pip freeze at current time of deployment in the virtual environment on pythonanywhere returns this:
@@ -58,10 +59,13 @@ itsdangerous==2.2.0
 Jinja2==3.1.4
 MarkupSafe==2.1.5
 numpy==1.26.4
+packaging==24.1
 pandas==2.2.2
+plotly==5.22.0
 python-dateutil==2.9.0.post0
 pytz==2024.1
 six==1.16.0
+tenacity==8.4.2
 tzdata==2024.1
 Werkzeug==3.0.3
 ```

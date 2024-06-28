@@ -1,6 +1,9 @@
 from flask import Flask, g, jsonify, request, render_template, redirect, url_for
 import os, sqlite3
 import pandas as pd
+from datetime import datetime
+import plotly.express as px
+import plotly.graph_objects as go
 
 app = Flask(__name__)
 DATABASE = 'erdling.db'
@@ -45,9 +48,24 @@ def kulturname(kultur_name):
     df_crop = pd.DataFrame(crop_data, columns=crop_cols)
     df_crop = df_crop.sort_values(by=['CropName', 'StartDate'], ascending=True)
     df_result = df_crop.where(df_crop.notnull(), '')
+    # Generate figure -- allow modifications for figure visualisation by creating copy.
+    df_fig = df_result
+    today = datetime.today().strftime('%Y-%m-%d')
+    year_start = datetime.today().strftime('%Y-01-01')
+    df_fig.loc[((df_fig['StartDate'] >= year_start) & (df_fig['EndDate'] == '')), 'EndDate'] = today
+    fig = px.timeline(df_fig, x_start="StartDate", x_end="EndDate", y="BedID", color="CropName")
+    fig.update_yaxes(autorange="reversed")
+    fig.update_layout({
+        'plot_bgcolor': 'rgb(234,216,192)',
+        'paper_bgcolor': 'rgba(0, 0, 0, 0)',
+    })
+    # Points for starting dates
+    dia = px.scatter(df_fig, x="StartDate", y="BedID", color="CropName", symbol_sequence=['diamond'])
+    dia.update_traces(marker=dict(size=12, line=dict(width=2)))
+    new_fig = go.Figure(data=fig.data + dia.data, layout=fig.layout)
     pd.set_option('colheader_justify', 'center')
     h1_str="Crop: {}".format(kultur_name)
-    return render_template('crop_location.html', tables=[df_result.to_html(classes=['tablestyle', 'sortable'], header="true")], h1_string=h1_str)
+    return render_template('crop_location.html', tables=[df_result.to_html(classes=['tablestyle', 'sortable'], header="true")], fig=new_fig.to_html(full_html=False), h1_string=h1_str)
 
 # Go to bedID URL to retrieve info.
 @app.route('/beetID/<ID>', methods=("POST", "GET"))
