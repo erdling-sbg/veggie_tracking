@@ -49,7 +49,7 @@ def kulturname(kultur_name):
     df_crop = df_crop.sort_values(by=['CropName', 'StartDate'], ascending=True)
     df_result = df_crop.where(df_crop.notnull(), '')
     # Generate figure -- allow modifications for figure visualisation by creating copy.
-    df_fig = df_result
+    df_fig = df_result.copy(deep=True)
     today = datetime.today().strftime('%Y-%m-%d')
     year_start = datetime.today().strftime('%Y-01-01')
     df_fig.loc[((df_fig['StartDate'] >= year_start) & (df_fig['EndDate'] == '')), 'EndDate'] = today
