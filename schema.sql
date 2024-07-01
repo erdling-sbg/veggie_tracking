@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS Plantings (
     PlantingID INT PRIMARY KEY,
     BedID INT,
     CropID INT,
+    CropName VARCHAR(255),
     StartDate DATE,
     EndDate DATE,
     PlantingMethod VARCHAR(255),
