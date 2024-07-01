@@ -4,7 +4,6 @@
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
 __pycache__/
-data_csv/
 .DS_Store
 
 # User-specific files
@@ -15,6 +14,8 @@ data_csv/
 *.sln.docstates
 *.ipynb
 .ipynb_checkpoints
+secret_farmapp.py
+data_csv/
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
