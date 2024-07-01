@@ -1,9 +1,6 @@
-import os, sqlite3
+import os, requests, sqlite3, sys
 import pandas as pd
-
-DATABASE = 'erdling.db'
-CSV_DIR = 'data_csv'
-CSV_NAMES = ['Beds.csv', 'Crops.csv', 'Plantings.csv', 'SoilImprovements.csv']
+import config_farmapp # Internal
 
 #
 # Database stuff
@@ -17,16 +14,15 @@ def init_db():
     db.close()
 
 def get_db():
-    db = sqlite3.connect(DATABASE)
+    db = sqlite3.connect(config_farmapp.DATABASE)
     return db
 
-def insert_data():
+def insert_data(csv_dir, sheet_names):
     # creating a connection to the database
     db = get_db()
-    for csv_fn in CSV_NAMES:
+    for sheetname in sheet_names:
         # reading data from the CSV file
-        path_to_csv = os.path.join(CSV_DIR, csv_fn)
-        table_name = str.split(csv_fn, '.')[0]
+        path_to_csv = os.path.join(csv_dir, f'{sheetname}.csv')
         df = pd.read_csv(path_to_csv)
         # data cleanup
         df.columns = df.columns.str.strip()
@@ -38,8 +34,24 @@ def insert_data():
         # Load data file to SQLite as tmp table -- skip for now. Keep for reference.
         # df.to_sql('tmp', db, if_exists='replace', index=False)
         # insert non duplicates to existing table
-        insert_sql = f'INSERT INTO {table_name} ({columns_str}) VALUES ({placeholders}) ON CONFLICT({id_col}) DO NOTHING'
+        insert_sql = f'INSERT INTO {sheetname} ({columns_str}) VALUES ({placeholders}) ON CONFLICT({id_col}) DO NOTHING'
         for _, row in df.iterrows():
             db.cursor().execute(insert_sql, tuple(row))
         db.commit()
     db.close()
+    print('SQLite Database saved to: {}'.format(config_farmapp.DATABASE))  
+#
+# Google Sheet Stuff
+#
+def getGoogleSheet(spreadsheet_id, outDir, dict_of_sheets):
+    for sheetname, sheet_number in dict_of_sheets.items():
+        url = f'https://docs.google.com/spreadsheets/d/{spreadsheet_id}/export?format=csv&gid={sheet_number}'
+        response = requests.get(url)
+        if response.status_code == 200:
+            filepath = os.path.join(outDir, f'{sheetname}.csv')
+            with open(filepath, 'wb') as f:
+                f.write(response.content)
+                print('CSV file saved to: {}'.format(filepath))    
+        else:
+            print(f'Error downloading Google Sheet: {response.status_code}')
+            sys.exit(1)
