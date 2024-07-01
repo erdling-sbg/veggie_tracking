@@ -13,6 +13,8 @@ data_csv/
 *.user
 *.userosscache
 *.sln.docstates
+*.ipynb
+.ipynb_checkpoints
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
