@@ -105,7 +105,7 @@ def beetID(ID):
 def get_planting_history(ID):
     conn = sqlite3.connect(DATABASE)
     c = conn.cursor()
-    sql_query = ('''SELECT StartDate, EndDate, CropName, AlternativeNamen, CropSorte, CropFamilie, PlantingMethod, Plantings.Notizen
+    sql_query = ('''SELECT StartDate, EndDate, Crops.CropName, AlternativeNamen, CropSorte, CropFamilie, PlantingMethod, Plantings.Notizen
                     FROM Plantings
                     INNER JOIN Crops
                     on Plantings.CropID = Crops.CropID
@@ -134,11 +134,11 @@ def get_specific_crop(crop_str):
     crop_str = crop_str.lower()
     conn = sqlite3.connect(DATABASE)
     c = conn.cursor()
-    sql_query = ('''SELECT BedID, StartDate, EndDate, CropName, CropSorte, CropFamilie, PlantingMethod, Plantings.Notizen
+    sql_query = ('''SELECT BedID, StartDate, EndDate, Crops.CropName, CropSorte, CropFamilie, PlantingMethod, Plantings.Notizen
                     FROM Plantings
                     INNER JOIN Crops
                     on Plantings.CropID = Crops.CropID
-                    WHERE LOWER(CropName) LIKE "%{}%"
+                    WHERE LOWER(Crops.CropName) LIKE "%{}%"
                     ORDER BY StartDate DESC;''').format(crop_str)
     cur = c.execute(sql_query)
     cols = list(map(lambda x: x[0], cur.description))

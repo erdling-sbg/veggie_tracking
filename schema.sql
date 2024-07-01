@@ -36,3 +36,37 @@ CREATE TABLE IF NOT EXISTS SoilImprovements (
     Notizen VARCHAR(255),
     FOREIGN KEY (BedID) REFERENCES Beds(BedID)
 );
+
+CREATE TABLE IF NOT EXISTS AnbauInfos (
+    AnbauID INT PRIMARY KEY,
+    CropName VARCHAR(255),
+    Intensität VARCHAR(255),
+    NachbarnGut VARCHAR(255),
+    NachbarnSchlecht VARCHAR(255),
+    Keimdauer VARCHAR(255),
+    Keimtemperatur VARCHAR(255),
+    Saattiefe VARCHAR(255),
+    Pflanztiefe VARCHAR(255),
+    Pflanzenabstand VARCHAR(255),
+    Reihenabstand VARCHAR(255),
+    SäenVorziehenStart DATE,
+    SäenVorziehenEnde DATE,
+    SäenDirektStart1 DATE,
+    SäenDirektEnde1 DATE,
+    SäenDirektStart2 DATE,
+    SäenDirektEnde2 DATE,
+    SetzenStart1 DATE,
+    SetzenEnde1 DATE,
+    SetzenStart2 DATE,
+    SetzenEnde2 DATE,
+    SteckenStart1 DATE,
+    SteckenEnde1 DATE,
+    TagezurReifeGesäet INT,
+    TagezurReifeGesetzt INT,
+    TagezurReifeGesteckt INT,
+    ErntefensterStart1 DATE,
+    ErntefensterEnde1 DATE,
+    ErntefensterStart2 DATE,
+    ErntefensterEnde2 DATE,
+    Notizen VARCHAR(255)
+);

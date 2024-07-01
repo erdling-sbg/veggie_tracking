@@ -13,7 +13,7 @@ GOOGLESHEETID = secret_farmapp.GOOGLESHEETID
 # Be sure that the sheet names and columns match the values in schema.sql
 #
 GOOGLESHEETDICT = {
-    # 'AnbauInfos': secret_farmapp.GOOGLESHEETDICT['AnbauInfos'],
+    'AnbauInfos': secret_farmapp.GOOGLESHEETDICT['AnbauInfos'],
     # 'SeedSaving': secret_farmapp.GOOGLESHEETDICT['SeedSaving'],
     'Beds': secret_farmapp.GOOGLESHEETDICT['Beds'],
     'Crops': secret_farmapp.GOOGLESHEETDICT['Crops'],
