@@ -57,8 +57,10 @@ def kulturname(kultur_name):
     fig.update_yaxes(autorange="reversed")
     fig.update_layout({
         'plot_bgcolor': 'rgb(234,216,192)',
-        'paper_bgcolor': 'rgba(0, 0, 0, 0)',
+        'paper_bgcolor': 'rgba(0, 0, 0, 0)'
     })
+    fig.update_xaxes(range=['2024-01-01', f'{today}'], fixedrange=True)
+    fig.update_yaxes(fixedrange=True)
     # Points for starting dates
     dia = px.scatter(df_fig, x="StartDate", y="BedID", color="CropName", symbol_sequence=['diamond'])
     dia.update_traces(marker=dict(size=12, line=dict(width=2)))
@@ -92,8 +94,10 @@ def beetID(ID):
     fig.update_yaxes(autorange="reversed")
     fig.update_layout({
         'plot_bgcolor': 'rgb(234,216,192)',
-        'paper_bgcolor': 'rgba(0, 0, 0, 0)',
+        'paper_bgcolor': 'rgba(0, 0, 0, 0)'
     })
+    fig.update_xaxes(range=['2024-01-01', f'{today}'], fixedrange=True)
+    fig.update_yaxes(fixedrange=True)
     dia = px.scatter(df_fig, x="StartDate", y="CropName", color="CropFamilie", symbol_sequence=['diamond'])
     dia.update_traces(marker=dict(size=12, line=dict(width=2)))
     # Put it all together!
