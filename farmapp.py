@@ -8,6 +8,28 @@ import plotly.graph_objects as go
 app = Flask(__name__)
 DATABASE = 'erdling.db'
 #
+# Chart Color Dictionaries
+#
+crop_family_colors = {
+    'Brassiacaecaea':'#8dd3c7',
+    'Cucurbitaceae':'#fdb462',
+    'Fabaceae':'#bebada',
+    'Solanaceae':'#fb8072',
+    'Asteraceae':'#b3de69',
+    'Apiaceae':'#fccde5',
+    'Liliaceae':'#80b1d3',
+    'Poaceae':'#ffffb3',
+    'Amaranthaceae':'#bc80bd',
+}
+
+soil_improvement_colors = {
+    'Kompost': '#996600',
+    'Schwarze Folie': '#000000',
+    'Gründüngung': '#99ff66',
+    'Grünbrache': '#00cc99'
+}
+
+#
 # Routing
 #
 # Receive and check input for bedID number (0-90).
@@ -86,11 +108,18 @@ def beetID(ID):
     df_result = df_result.where(df_result.notnull(), '')
     # Figure stuff
     df_fig = df_result.copy(deep=True)
-    df_fig = df_fig.drop(df_fig[df_fig['ImprovementName'] != ''].index)
+    #df_fig = df_fig.drop(df_fig[df_fig['ImprovementName'] != ''].index)
     today = datetime.today().strftime('%Y-%m-%d')
     year_start = datetime.today().strftime('%Y-01-01')
     df_fig.loc[((df_fig['StartDate'] >= year_start) & (df_fig['EndDate'] == '')), 'EndDate'] = today
-    fig = px.timeline(df_fig, x_start="StartDate", x_end="EndDate", y="CropName", color="CropFamilie")
+    fig = px.timeline(
+        df_fig.loc[df_fig['ImprovementName'] == ''],
+        x_start="StartDate",
+        x_end="EndDate",
+        y="CropName",
+        color="CropFamilie",
+        color_discrete_map = crop_family_colors
+    )
     fig.update_yaxes(autorange="reversed")
     fig.update_layout({
         'plot_bgcolor': 'rgb(234,216,192)',
@@ -98,10 +127,33 @@ def beetID(ID):
     })
     fig.update_xaxes(range=['2024-01-01', f'{today}'], fixedrange=True)
     fig.update_yaxes(fixedrange=True)
-    dia = px.scatter(df_fig, x="StartDate", y="CropName", color="CropFamilie", symbol_sequence=['diamond'])
+    dia = px.scatter(
+        df_fig.loc[df_fig['ImprovementName'] == ''],
+        x="StartDate",
+        y="CropName",
+        color="CropFamilie",
+        color_discrete_map = crop_family_colors,
+        symbol_sequence=['diamond']
+    )
     dia.update_traces(marker=dict(size=12, line=dict(width=2)))
+    soil_process = px.timeline(
+        df_fig.loc[((df_fig['ImprovementName'] != 'Kompost') & (df_fig['ImprovementName'] != ''))],
+        x_start="StartDate",
+        x_end="EndDate",
+        y="ImprovementName",
+        color="ImprovementName",
+        color_discrete_map = soil_improvement_colors
+    )
+    soil_event = px.scatter(
+        df_fig.loc[df_fig['ImprovementName'] == 'Kompost'],
+        x="StartDate",
+        y="ImprovementName",
+        color="ImprovementName",
+        color_discrete_map = soil_improvement_colors,
+        symbol_sequence=['line-ns-open'])
+    soil_event.update_traces(marker=dict(size=12, line=dict(width=10))) 
     # Put it all together!
-    new_fig = go.Figure(data=fig.data + dia.data, layout=fig.layout)
+    new_fig = go.Figure(data=fig.data + dia.data + soil_process.data + soil_event.data, layout=fig.layout)
     pd.set_option('colheader_justify', 'center')
     h1_str="Beet #{}".format(ID)
     return render_template('bed_history.html', tables=[df_result.to_html(classes=['tablestyle', 'sortable'], header="true")], fig=new_fig.to_html(full_html=False), h1_string=h1_str)
