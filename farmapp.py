@@ -75,7 +75,14 @@ def kulturname(kultur_name):
     today = datetime.today().strftime('%Y-%m-%d')
     year_start = datetime.today().strftime('%Y-01-01')
     df_fig.loc[((df_fig['StartDate'] >= year_start) & (df_fig['EndDate'] == '')), 'EndDate'] = today
-    fig = px.timeline(df_fig, x_start="StartDate", x_end="EndDate", y="BedID", color="CropName")
+    fig = px.timeline(
+        df_fig,
+        x_start="StartDate",
+        x_end="EndDate",
+        y="BedID",
+        color="CropFamilie",
+        color_discrete_map = crop_family_colors
+    )
     fig.update_yaxes(autorange="reversed")
     fig.update_layout({
         'plot_bgcolor': 'rgb(234,216,192)',
@@ -84,7 +91,14 @@ def kulturname(kultur_name):
     fig.update_xaxes(range=['2024-01-01', f'{today}'], fixedrange=True)
     fig.update_yaxes(fixedrange=True)
     # Points for starting dates
-    dia = px.scatter(df_fig, x="StartDate", y="BedID", color="CropName", symbol_sequence=['diamond'])
+    dia = px.scatter(
+        df_fig,
+        x="StartDate",
+        y="BedID",
+        color="CropFamilie",
+        color_discrete_map = crop_family_colors,
+        symbol_sequence=['diamond']
+        )
     dia.update_traces(marker=dict(size=12, line=dict(width=2)))
     new_fig = go.Figure(data=fig.data + dia.data, layout=fig.layout)
     pd.set_option('colheader_justify', 'center')
@@ -194,7 +208,7 @@ def get_specific_crop(crop_str):
                     FROM Plantings
                     INNER JOIN Crops
                     on Plantings.CropID = Crops.CropID
-                    WHERE LOWER(Crops.CropName) LIKE "%{}%"
+                    WHERE LOWER(Crops.CropName) LIKE "{}"
                     ORDER BY StartDate DESC;''').format(crop_str)
     cur = c.execute(sql_query)
     cols = list(map(lambda x: x[0], cur.description))
