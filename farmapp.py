@@ -139,7 +139,7 @@ def beetID(ID):
         color_discrete_map = crop_family_colors,
         labels={
             "CropName": "Kulturnamen",
-            "CropFamilie": "Pflanzenfamilien"
+            "CropFamilie": "In dem Beet..."
         }
     )
     fig.update_yaxes(autorange="reversed")
