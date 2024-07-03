@@ -81,7 +81,11 @@ def kulturname(kultur_name):
         x_end="EndDate",
         y="BedID",
         color="CropFamilie",
-        color_discrete_map = crop_family_colors
+        color_discrete_map = crop_family_colors,
+        labels={
+            "BedID": "Beet #",
+            "CropFamilie": "Pflanzenfamilien"
+        }
     )
     fig.update_yaxes(autorange="reversed")
     fig.update_layout({
@@ -132,7 +136,11 @@ def beetID(ID):
         x_end="EndDate",
         y="CropName",
         color="CropFamilie",
-        color_discrete_map = crop_family_colors
+        color_discrete_map = crop_family_colors,
+        labels={
+            "CropName": "Kulturnamen",
+            "CropFamilie": "Pflanzenfamilien"
+        }
     )
     fig.update_yaxes(autorange="reversed")
     fig.update_layout({
