@@ -21,13 +21,31 @@ crop_family_colors = {
     'Poaceae':'#ffffb3',
     'Amaranthaceae':'#bc80bd',
 }
-
 soil_improvement_colors = {
     'Kompost': '#996600',
     'Schwarze Folie': '#000000',
     'Gründüngung': '#99ff66',
     'Grünbrache': '#00cc99'
 }
+solarised_colors = {
+    'base03':    '#002b36',
+    'base02':    '#073642',
+    'base01':    '#586e75',
+    'base00':    '#657b83',
+    'base0':     '#839496',
+    'base1':     '#93a1a1',
+    'base2':     '#eee8d5',
+    'base3':     '#fdf6e3',
+    'yellow':    '#b58900',
+    'orange':    '#cb4b16',
+    'red':       '#dc322f',
+    'magenta':   '#d33682',
+    'violet':    '#6c71c4',
+    'blue':      '#268bd2',
+    'cyan':      '#2aa198',
+    'green':     '#859900',
+}
+solarised_colors['green']
 
 #
 # Routing
@@ -211,208 +229,102 @@ def anbau_view():
     )
 
 def get_planting_history(ID):
-    conn = sqlite3.connect(DATABASE)
-    c = conn.cursor()
     sql_query = ('''SELECT StartDate, EndDate, Crops.CropName, AlternativeNamen, CropSorte, CropFamilie, PlantingMethod, Plantings.Notizen
                     FROM Plantings
                     INNER JOIN Crops
                     on Plantings.CropID = Crops.CropID
                     WHERE Plantings.BedID = {}
                     ORDER BY StartDate DESC;''').format(ID)
-    cur = c.execute(sql_query)
-    cols = list(map(lambda x: x[0], cur.description))
-    history = c.fetchall()
-    conn.close()
+    cols, history = connect_execute_query(sql_query)
     return cols, history
 
 def get_soil_history(ID):
-    conn = sqlite3.connect(DATABASE)
-    c = conn.cursor()
     sql_query = ('''SELECT StartDate, EndDate, ImprovementName, Notizen
                     FROM SoilImprovements
                     WHERE BedID = {};''').format(ID)
-    cur = c.execute(sql_query)
-    cols = list(map(lambda x: x[0], cur.description))
-    history = c.fetchall()
-    conn.close()
+    cols, history = connect_execute_query(sql_query)
     return cols, history
 
 def get_anbau_info(crop_str):
     crop_str = str(crop_str)
     crop_str = crop_str.lower()
-    conn = sqlite3.connect(DATABASE)
-    c = conn.cursor()
     sql_query = ('''SELECT *
                     FROM AnbauInfos
                     WHERE LOWER(CropName) LIKE "{}";''').format(crop_str)
-    cur = c.execute(sql_query)
-    cols = list(map(lambda x: x[0], cur.description))
-    history = c.fetchall()
-    conn.close()
+    cols, history = connect_execute_query(sql_query)
     return cols, history
 
 def get_all_anbau_info():
-    conn = sqlite3.connect(DATABASE)
-    c = conn.cursor()
     sql_query = ('''SELECT *
                     FROM AnbauInfos;''')
-    cur = c.execute(sql_query)
-    cols = list(map(lambda x: x[0], cur.description))
-    history = c.fetchall()
-    conn.close()
+    cols, history = connect_execute_query(sql_query)
     return cols, history
 
 def get_specific_crop(crop_str):
     crop_str = str(crop_str)
     crop_str = crop_str.lower()
-    conn = sqlite3.connect(DATABASE)
-    c = conn.cursor()
     sql_query = ('''SELECT BedID, StartDate, EndDate, Crops.CropName, CropSorte, CropFamilie, PlantingMethod, Plantings.Notizen
                     FROM Plantings
                     INNER JOIN Crops
                     on Plantings.CropID = Crops.CropID
                     WHERE LOWER(Crops.CropName) LIKE "{}"
                     ORDER BY StartDate DESC;''').format(crop_str)
+    cols, history = connect_execute_query(sql_query)
+    return cols, history
+
+def get_all_planted_crops():
+    sql_query = ('''SELECT DISTINCT Crops.CropName
+                    FROM Plantings
+                    INNER JOIN Crops
+                    on Plantings.CropID = Crops.CropID
+                    ORDER BY Crops.CropName ASC;''')
+    cols, history = connect_execute_query(sql_query)
+    planted_crops = list(history)
+    planted_crops = [crop[0] for crop in planted_crops]
+    return planted_crops
+
+def connect_execute_query(sql_query):
+    conn = sqlite3.connect(DATABASE)
+    c = conn.cursor()
     cur = c.execute(sql_query)
     cols = list(map(lambda x: x[0], cur.description))
     history = c.fetchall()
     conn.close()
     return cols, history
 
-def get_all_planted_crops():
-    conn = sqlite3.connect(DATABASE)
-    c = conn.cursor()
-    sql_query = ('''SELECT DISTINCT Crops.CropName
-                    FROM Plantings
-                    INNER JOIN Crops
-                    on Plantings.CropID = Crops.CropID
-                    ORDER BY Crops.CropName ASC;''')
-    cur = c.execute(sql_query)
-    cols = list(map(lambda x: x[0], cur.description))
-    history = c.fetchall()
-    planted_crops = list(history)
-    conn.close()
-    planted_crops = [crop[0] for crop in planted_crops]
-    return planted_crops
-
 def make_anbau_figure(df, height, grouped=True):
-    fig0 = px.timeline(
-        df,
-        x_start="SäenVorziehenStart",
-        x_end="SäenVorziehenEnde",
-        y="CropName",
-        labels={
-            "CropName": "Kulturnamen",
-        },
-        height=1500,
-    )
-    fig0.update_yaxes(autorange="reversed")
-    fig0.update_traces(marker_color="#6c71c4")
-    fig1 = px.timeline(
-        df,
-        x_start="SäenDirektStart1",
-        x_end="SäenDirektEnde1",
-        y="CropName",
-        labels={
-            "CropName": "Kulturnamen",
-        },
-        height=1500,
-    )
-    fig1.update_yaxes(autorange="reversed")
-    fig1.update_traces(marker_color="#dc322f")
-    fig2 = px.timeline(
-        df,
-        x_start="SäenDirektStart2",
-        x_end="SäenDirektEnde2",
-        y="CropName",
-        labels={
-            "CropName": "Kulturnamen",
-        },
-        height=1500,
-        )
-    fig2.update_yaxes(autorange="reversed")
-    fig2.update_traces(marker_color="#dc322f")
-    fig3 = px.timeline(
-        df,
-        x_start="SetzenStart1",
-        x_end="SetzenEnde1",
-        y="CropName",
-        labels={
-            "CropName": "Kulturnamen",
-        },
-        height=1500,
-        )
-    fig3.update_yaxes(autorange="reversed")
-    fig3.update_traces(marker_color="#b58900")
-    fig4 = px.timeline(
-        df,
-        x_start="SetzenStart2",
-        x_end="SetzenEnde2",
-        y="CropName",
-        labels={
-            "CropName": "Kulturnamen",
-        },
-        height=1500,
-    )
-    fig4.update_yaxes(autorange="reversed")
-    fig4.update_traces(marker_color="#b58900")
-    fig5 = px.timeline(
-        df,
-        x_start="SteckenStart1",
-        x_end="SteckenEnde1",
-        y="CropName",
-        labels={
-            "CropName": "Kulturnamen",
-        },
-        height=1500,
-    )
-    fig5.update_yaxes(autorange="reversed")
-    fig5.update_traces(marker_color="#268bd2")
-    fig6 = px.timeline(
-        df,
-        x_start="ErntefensterStart1",
-        x_end="ErntefensterEnde1",
-        y="CropName",
-        labels={
-            "CropName": "Kulturnamen",
-        },
-        height=1500,
-    )
-    fig6.update_yaxes(autorange="reversed")
-    fig6.update_traces(marker_color="#859900")
-    fig7 = px.timeline(
-        df,
-        x_start="ErntefensterStart2",
-        x_end="ErntefensterEnde2",
-        y="CropName",
-        labels={
-            "CropName": "Kulturnamen",
-        },
-        height=1500,
-    )
-    fig7.update_yaxes(autorange="reversed")
-    fig7.update_traces(marker_color="#859900")
+    fig0 = create_anbau_partial_figure(df, "SäenVorziehenStart", "SäenVorziehenEnde", solarised_colors['violet'])
+    fig1 = create_anbau_partial_figure(df, "SäenDirektStart1", "SäenDirektEnde1", solarised_colors['red'])
+    fig2 = create_anbau_partial_figure(df, "SäenDirektStart2", "SäenDirektEnde2", solarised_colors['red'])
+    fig3 = create_anbau_partial_figure(df, "SetzenStart1", "SetzenEnde1", solarised_colors['yellow'])
+    fig4 = create_anbau_partial_figure(df, "SetzenStart2", "SetzenEnde2", solarised_colors['yellow'])
+    fig5 = create_anbau_partial_figure(df, "SteckenStart1", "SteckenEnde1", solarised_colors['blue'])
+    fig6 = create_anbau_partial_figure(df, "ErntefensterStart1", "ErntefensterEnde1", solarised_colors['green'])
+    fig7 = create_anbau_partial_figure(df, "ErntefensterStart2", "ErntefensterEnde2", solarised_colors['green'])
+    combined_figure = go.Figure(data=fig0.data + fig1.data + fig2.data + fig3.data + fig4.data + fig5.data + fig6.data+ fig7.data, layout=fig0.layout)
+    combined_figure.update_layout({
+        'plot_bgcolor': 'rgb(234,216,192)',
+        'paper_bgcolor': 'rgba(0, 0, 0, 0)',
+        'height': height
+        })
+    combined_figure.update_xaxes(range=['2024-01-01', '2024-12-31'], fixedrange=True)
+    combined_figure.update_yaxes(autorange="reversed", fixedrange=True)
     if grouped == True:
-        new_fig_grouped = go.Figure(data=fig0.data + fig1.data + fig2.data + fig3.data + fig4.data + fig5.data + fig6.data+ fig7.data, layout=fig0.layout)
-        new_fig_grouped.update_layout({
-        'plot_bgcolor': 'rgb(234,216,192)',
-        'paper_bgcolor': 'rgba(0, 0, 0, 0)',
-        'barmode':'group',
-        'height': height
-        })
-        new_fig_grouped.update_xaxes(range=['2024-01-01', '2024-12-31'], fixedrange=True)
-        new_fig_grouped.update_yaxes(fixedrange=True)
-        return new_fig_grouped
-    else:
-        new_fig_all = go.Figure(data=fig0.data + fig1.data + fig2.data + fig3.data + fig4.data + fig5.data + fig6.data+ fig7.data, layout=fig0.layout)
-        new_fig_all.update_layout({
-        'plot_bgcolor': 'rgb(234,216,192)',
-        'paper_bgcolor': 'rgba(0, 0, 0, 0)',
-        'height': height
-        })
-        new_fig_all.update_xaxes(range=['2024-01-01', '2024-12-31'], fixedrange=True)
-        new_fig_all.update_yaxes(fixedrange=True)
-        return new_fig_all
+        combined_figure.update_layout({'barmode':'group'})
+    return combined_figure
+
+def create_anbau_partial_figure(df, start, end, marker_clr):
+    fig = px.timeline(
+        df,
+        x_start=start,
+        x_end=end,
+        y="CropName",
+        labels={
+            "CropName": "Kulturnamen"
+        }
+    )
+    fig.update_traces(marker_color=marker_clr)
+    return fig
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
