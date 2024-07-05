@@ -45,8 +45,6 @@ solarised_colors = {
     'cyan':      '#2aa198',
     'green':     '#859900',
 }
-solarised_colors['green']
-
 #
 # Routing
 #
@@ -123,6 +121,14 @@ def kulturname(kultur_name):
         )
     dia.update_traces(marker=dict(size=12, line=dict(width=2)))
     new_fig = go.Figure(data=fig.data + dia.data, layout=fig.layout)
+    # Move legend to top.
+    new_fig.update_layout(legend=dict(
+    orientation="h",
+    yanchor="bottom",
+    y=1.05,
+    xanchor="right",
+    x=1
+    ))
     pd.set_option('colheader_justify', 'center')
     h1_str="Crop: {}".format(kultur_name)
     anbau_cols, anbau_data = get_anbau_info(kultur_name)
@@ -209,6 +215,14 @@ def beetID(ID):
     soil_event.update_traces(marker=dict(size=12, line=dict(width=10))) 
     # Put it all together!
     new_fig = go.Figure(data=fig.data + dia.data + soil_process.data + soil_event.data, layout=fig.layout)
+    # Move legend to top.
+    new_fig.update_layout(legend=dict(
+    orientation="h",
+    yanchor="bottom",
+    y=1.05,
+    xanchor="right",
+    x=1
+    ))
     pd.set_option('colheader_justify', 'center')
     h1_str="Beet #{}".format(ID)
     return render_template('bed_history.html', tables=[df_result.to_html(classes=['tablestyle', 'sortable'], header="true")], fig=new_fig.to_html(full_html=False), h1_string=h1_str)
