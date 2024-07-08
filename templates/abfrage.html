@@ -21,9 +21,10 @@
                 <option value="{{n}}">{{ n }}</option>
             {% endfor %}
         </select>
-        <p><input type = "submit" value = "...war mal hier" id="kulturname"/></p>
+        <p><input type = "submit" value = "...war(en) mal hier" id="kulturname"/></p>
         </form>
       </div>
+      <button id="Enter" type="button" onclick="window.location.href = '/anbau' ; " class="button-89">Gemüseanbaukalender</button>
       <div>
          <img src="{{url_for('static', filename='images/erdling_logo.gif')}}" alt="Erdling Logo">
      </div>      

@@ -239,7 +239,7 @@ def anbau_view():
     return render_template(
         'anbau_view.html',
         fig=anbau_fig.to_html(full_html=False),
-        h1_string="Überblick"
+        h1_string="Wann wird alles bei den Erdlingen angebaut?"
     )
 
 def get_planting_history(ID):
