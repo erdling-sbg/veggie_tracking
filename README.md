@@ -4,6 +4,7 @@ Right now the data is coming from CSV files and being used to fill an SQLite dat
 
 The table names are:
 
+- AnbauInfos
 - Beds
 - Crops
 - Plantings
@@ -42,12 +43,21 @@ You will need to create a different python environment following the pythonanywh
 
 Follow this to setup: https://help.pythonanywhere.com/pages/Flask/
 
+Based on those instructions, first, a virtual environment was setup with the default name:
+
+```
+mkvirtualenv --python=/usr/bin/python3.10 my-virtualenv
+```
+
 You will need the following packages in your python environment as created on python anywhere without conda, but ultimately the two necessary depenencies are specified in the conda environment file above:
 
 - flask
 - pandas
 - plotly
 
+```
+pip install plotly pandas flask
+```
 
 A pip freeze at current time of deployment in the virtual environment on pythonanywhere returns this:
 
