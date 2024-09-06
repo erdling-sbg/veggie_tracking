@@ -9,22 +9,25 @@
       <div>      
       <form method = "post">
          <h1>Was gibt's am Acker?</h1>
-         <h2>BeetID (0-90):</h2>
-         <p><input type = "text" name = "bid" /></p>
+         <h2>BeetID (0-90):</h2> 
+         <p><input type = "text" name = "bid" class="input"/></p>
          <p><input type = "submit" value = "Schau ma mal..." /></p>
       </form>
    </div>
       <div>
          <form method = "post" id="kulturname">
+         <div class="select">   
          <select name="kulturname" form="kulturname">
             {% for n in name %}
                 <option value="{{n}}">{{ n }}</option>
             {% endfor %}
         </select>
-        <p><input type = "submit" value = "...war(en) mal hier" id="kulturname"/></p>
+        <span class="focus"></span>
+      </div>
+        <p><input type = "submit" value = "...war(en) mal hier"/></p>
         </form>
       </div>
-      <button id="Enter" type="button" onclick="window.location.href = '/anbau' ; " class="button-89">Gemüseanbaukalender</button>
+          <button id="Enter" type="button" onclick="window.location.href = '/anbau' ; " class="button-89">Gemüseanbaukalender</button>
       <div>
          <img src="{{url_for('static', filename='images/erdling_logo.gif')}}" alt="Erdling Logo">
      </div>      
