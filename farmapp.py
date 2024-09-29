@@ -242,6 +242,22 @@ def anbau_view():
         h1_string="Wann wird alles bei den Erdlingen angebaut?"
     )
 
+# Go to kulturname URL to retrieve info.
+@app.route('/folien', methods=("POST", "GET"))
+def folien_view():
+    today = datetime.today().strftime('%Y-%m-%d')
+    folien_cols, folien_data = get_all_folien()
+    df_folien = pd.DataFrame(folien_data, columns=folien_cols)
+    df_folien = df_folien.where(df_folien.notnull(), '')
+    df_folien = df_folien.loc[df_folien['EndDate'] == '']
+    df_folien["Tage drauf"] = ((datetime.today() - pd.to_datetime(df_folien['StartDate'], format='%Y-%m-%d')).dt.days)
+    df_folien = df_folien.drop(['EndDate'], axis=1)
+    return render_template(
+        'folien_history.html',
+        tables=[df_folien.to_html(classes=['tablestyle', 'sortable'], header="true")],
+        h1_string="Seit wann liegen schwarze Folien?"
+    )
+
 def get_planting_history(ID):
     sql_query = ('''SELECT StartDate, EndDate, Crops.CropName, AlternativeNamen, CropSorte, CropFamilie, PlantingMethod, Plantings.Notizen
                     FROM Plantings
@@ -296,6 +312,14 @@ def get_all_planted_crops():
     planted_crops = list(history)
     planted_crops = [crop[0] for crop in planted_crops]
     return planted_crops
+
+def get_all_folien():
+    sql_query = ('''SELECT BedID, StartDate, EndDate, Notizen
+                    FROM SoilImprovements
+                    WHERE ImprovementName = "Schwarze Folie"
+                    ORDER BY StartDate DESC;''')
+    cols, history = connect_execute_query(sql_query)
+    return cols, history
 
 def connect_execute_query(sql_query):
     conn = sqlite3.connect(DATABASE)

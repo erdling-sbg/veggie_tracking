@@ -125,6 +125,10 @@ button {
   font-size: 1rem;
 }
 
+.container {
+  display: flex;
+}
+
 /* Fancy input "buttons"... */
 input[type=submit] {
   --b: 3px;   /* border thickness */
