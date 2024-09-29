@@ -52,17 +52,18 @@ solarised_colors = {
 @app.route('/',methods = ['POST', 'GET'])
 def my_form_post():
     kultur_namen_list = get_all_planted_crops()
+    update_date = str(get_most_recent_update_date())
     if request.method == 'POST' and 'bid' in request.form:
         # Validate number as input.
         while True:
             try:
                 bedid = int(request.form['bid'])
             except ValueError:
-                return render_template('abfrage.html', name=kultur_namen_list)
+                return render_template('abfrage.html', name=kultur_namen_list, update_date=update_date)
             if bedid < 0:
-                return render_template('abfrage.html', name=kultur_namen_list)
+                return render_template('abfrage.html', name=kultur_namen_list, update_date=update_date)
             elif bedid > 90:
-                return render_template('abfrage.html', name=kultur_namen_list)
+                return render_template('abfrage.html', name=kultur_namen_list, update_date=update_date)
             else:
                 break
         return redirect(url_for('beetID', ID = str(bedid)))
@@ -72,12 +73,12 @@ def my_form_post():
             try:
                 kultur_name = str(request.form.get('kulturname'))
             except ValueError:
-                return render_template('abfrage.html', name=kultur_namen_list)
+                return render_template('abfrage.html', name=kultur_namen_list, update_date=update_date)
             else:
                 break
         return redirect(url_for('kulturname', kultur_name = kultur_name))
     else:
-        return render_template('abfrage.html', name=kultur_namen_list)
+        return render_template('abfrage.html', name=kultur_namen_list, update_date=update_date)
 
 # Go to kulturname URL to retrieve info.
 @app.route('/kulturname/<kultur_name>', methods=("POST", "GET"))
@@ -145,7 +146,8 @@ def kulturname(kultur_name):
         h1_anbau_str=h1_anbau_str,
         good_neighbors=str(df_anbau['NachbarnGut'][0]),
         bad_neighbors=str(df_anbau['NachbarnSchlecht'][0]),
-        intensity=str(df_anbau['Intensität'][0])
+        intensity=str(df_anbau['Intensität'][0]),
+        update_date = str(get_most_recent_update_date())
         )
 
 # Go to bedID URL to retrieve info.
@@ -225,7 +227,13 @@ def beetID(ID):
     ))
     pd.set_option('colheader_justify', 'center')
     h1_str="Beet #{}".format(ID)
-    return render_template('bed_history.html', tables=[df_result.to_html(classes=['tablestyle', 'sortable'], header="true")], fig=new_fig.to_html(full_html=False), h1_string=h1_str)
+    return render_template(
+        'bed_history.html',
+        tables=[df_result.to_html(classes=['tablestyle', 'sortable'], header="true")],
+        fig=new_fig.to_html(full_html=False),
+        h1_string=h1_str,
+        update_date = str(get_most_recent_update_date())
+    )
 
 # Go to kulturname URL to retrieve info.
 @app.route('/anbau', methods=("POST", "GET"))
@@ -239,7 +247,8 @@ def anbau_view():
     return render_template(
         'anbau_view.html',
         fig=anbau_fig.to_html(full_html=False),
-        h1_string="Wann wird alles bei den Erdlingen angebaut?"
+        h1_string="Wann wird alles bei den Erdlingen angebaut?",
+        update_date = str(get_most_recent_update_date())
     )
 
 # Go to kulturname URL to retrieve info.
@@ -255,7 +264,8 @@ def folien_view():
     return render_template(
         'folien_history.html',
         tables=[df_folien.to_html(classes=['tablestyle', 'sortable'], header="true")],
-        h1_string="Seit wann liegen schwarze Folien?"
+        h1_string="Seit wann liegen schwarze Folien?",
+        update_date = str(get_most_recent_update_date())
     )
 
 def get_planting_history(ID):
@@ -312,6 +322,19 @@ def get_all_planted_crops():
     planted_crops = list(history)
     planted_crops = [crop[0] for crop in planted_crops]
     return planted_crops
+
+def get_most_recent_update_date():
+    sql_query = ('''SELECT Plantings.StartDate, Plantings.EndDate, SoilImprovements.StartDate as StartDate2, SoilImprovements.EndDate as Enddate2
+                    FROM Plantings
+                    INNER JOIN SoilImprovements
+                    on Plantings.BedID = SoilImprovements.BedID;''')
+    cols, history = connect_execute_query(sql_query)
+    df_dates = pd.DataFrame(history, columns=cols)
+    df_dates = df_dates.where(df_dates.notnull(), '')
+    df_dates = df_dates.apply(pd.to_datetime)
+    most_recent_date = pd.to_datetime(df_dates.stack()).max()
+    most_recent_date = most_recent_date.strftime('%Y-%m-%d')
+    return most_recent_date
 
 def get_all_folien():
     sql_query = ('''SELECT BedID, StartDate, EndDate, Notizen

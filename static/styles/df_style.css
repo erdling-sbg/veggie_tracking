@@ -16,6 +16,15 @@ p {
   margin-left: 20px;
 }
 
+.update-date {
+  text-align: center;
+  margin-top: 20px;
+  margin-bottom: 0px;
+  margin-right: 20px;
+  margin-left: 20px;
+  font-style: italic;
+}
+
   /* Make width responsive (horizontal sliding bar)  */
 .table-wrapper {
     width: 100%;
