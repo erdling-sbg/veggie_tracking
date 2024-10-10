@@ -13,12 +13,12 @@
             {{ table|safe }}
 {% endfor %}
 </div>
+{{ fig|safe }}
 <div>
     <p>Gute Nachbarn: {{good_neighbors}}</p>
     <p>Schlechte Nachbarn: {{bad_neighbors}}</p>
     <p>{{intensity}}zehrer</p>
 </div>
-{{ fig|safe }}
 <h1>{{h1_anbau_str}}</h1>
 {{ anbau_fig|safe }}
 <button id="Enter" type="button" onclick="window.location.href = '/' ; " class="button-89">Zurück</button>

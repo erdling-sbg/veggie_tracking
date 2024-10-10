@@ -91,7 +91,13 @@ def kulturname(kultur_name):
     df_fig = df_result.copy(deep=True)
     today = datetime.today().strftime('%Y-%m-%d')
     year_start = datetime.today().strftime('%Y-01-01')
-    df_fig.loc[((df_fig['StartDate'] >= year_start) & (df_fig['EndDate'] == '')), 'EndDate'] = today
+    # Change to give enddate to everything, now that database is more consistent.
+    df_fig.loc[
+        (
+            #(df_fig['StartDate'] >= year_start) &
+            (df_fig['EndDate'] == '')
+            ), 'EndDate'
+        ] = today
     fig = px.timeline(
         df_fig,
         x_start="StartDate",
