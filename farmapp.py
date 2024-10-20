@@ -159,7 +159,7 @@ def kulturname(kultur_name):
 # Go to bedID URL to retrieve info.
 @app.route('/beetID/<ID>', methods=("POST", "GET"))
 def beetID(ID):
-    planting_cols, planting_data = get_planting_history(ID)
+    planting_cols, planting_data = get_planting_history_per_bed(ID)
     soil_cols, soil_data = get_soil_history(ID)
     # create DataFrame using data and concatonate plantings and soil improvements
     df_planting = pd.DataFrame(planting_data, columns=planting_cols)
@@ -250,11 +250,15 @@ def anbau_view():
     df_anbau = df_anbau.where(df_anbau.notnull(), '')
     anbau_fig = make_anbau_figure(df_anbau, 3000, grouped=False)
     anbau_fig.add_vline(x=today, line_width=3, line_color="black")
+    family_overview = get_family_anbau_overview(list(crop_family_colors.keys()))
+    families = family_overview.keys()
     return render_template(
         'anbau_view.html',
         fig=anbau_fig.to_html(full_html=False),
         h1_string="Wann wird alles bei den Erdlingen angebaut?",
-        update_date = str(get_most_recent_update_date())
+        update_date = str(get_most_recent_update_date()),
+        families = families,
+        family_overview = family_overview
     )
 
 # Go to kulturname URL to retrieve info.
@@ -274,8 +278,8 @@ def folien_view():
         update_date = str(get_most_recent_update_date())
     )
 
-def get_planting_history(ID):
-    sql_query = ('''SELECT StartDate, EndDate, Crops.CropName, AlternativeNamen, CropSorte, CropFamilie, PlantingMethod, Plantings.Notizen
+def get_planting_history_per_bed(ID):
+    sql_query = ('''SELECT Plantings.StartDate, Plantings.EndDate, Crops.CropName, Crops.AlternativeNamen, Crops.CropSorte, Crops.CropFamilie, Plantings.PlantingMethod, Plantings.Notizen
                     FROM Plantings
                     INNER JOIN Crops
                     on Plantings.CropID = Crops.CropID
@@ -283,6 +287,60 @@ def get_planting_history(ID):
                     ORDER BY StartDate DESC;''').format(ID)
     cols, history = connect_execute_query(sql_query)
     return cols, history
+
+def get_planting_history_per_family(family):
+    sql_query = ('''SELECT Plantings.BedID, Plantings.StartDate, Plantings.EndDate, Crops.CropName, Crops.AlternativeNamen, Crops.CropSorte, Crops.CropFamilie, Plantings.PlantingMethod, Plantings.Notizen
+                    FROM Plantings
+                    INNER JOIN Crops
+                    on Plantings.CropID = Crops.CropID
+                    WHERE Crops.CropFamilie = "{}"
+                    ORDER BY Plantings.BedID ASC;''').format(family)
+    cols, history = connect_execute_query(sql_query)
+    return cols, history
+
+def empty_year_list_gen(min_right=0, max_right_plus_one=43, min_left=51, max_left_plus_one=83):
+    empty_year_list = []
+    for x in range(min_right, max_right_plus_one):
+        empty_year_list.append(str(x))
+    for x in range (min_left, max_left_plus_one):
+        empty_year_list.append(str(x))
+    return empty_year_list
+
+def get_family_anbau_overview(family_list):
+    family_overview = {}
+    for family in family_list:
+        # Get data per family.
+        crop_cols, crop_data = get_planting_history_per_family(family)
+        df_crop = pd.DataFrame(crop_data, columns=crop_cols)
+        df_crop = df_crop.sort_values(by=['BedID'], ascending=True)
+        df_result = df_crop.where(df_crop.notnull(), '')
+        # Create list of all beds for future planning calculation
+        empty_year_list = empty_year_list_gen()
+        # Sort data from database into dictionary
+        for index, row in df_result.iterrows():
+            bedid = str(row["BedID"])
+            family = row["CropFamilie"]
+            yyyy, mm, dd = row["StartDate"].split("-")
+            if family not in family_overview:
+                family_overview[family] = {}
+            if "Beete für 2025" not in family_overview[family]:
+                family_overview[family]["Beete für 2025"] = empty_year_list
+            if yyyy not in family_overview[family]:
+                family_overview[family][yyyy] = []
+            bed_list = family_overview[family][yyyy]
+            possible_2025 = family_overview[family]["Beete für 2025"]
+            if bedid not in bed_list:
+                bed_list.append(bedid)
+                family_overview[family][yyyy] = bed_list
+            if (bedid in bed_list) and (bedid in possible_2025):
+                possible_2025.remove(bedid)
+                family_overview[family]["Beete für 2025"] = possible_2025
+        family_overview[family]["2023 Anzahl"] = [len(family_overview[family]["2023"]),]
+        family_overview[family]["2024 Anzahl"] = [len(family_overview[family]["2024"]),]
+        family_overview[family]["Beete für 2025 Anzahl"] = [len(family_overview[family]["Beete für 2025"]),]
+        family_overview[family] = dict(sorted(family_overview[family].items()))
+    family_overview = dict(sorted(family_overview.items()))
+    return family_overview
 
 def get_soil_history(ID):
     sql_query = ('''SELECT StartDate, EndDate, ImprovementName, Notizen

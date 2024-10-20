@@ -9,6 +9,22 @@
 <body>
 <h1>{{ h1_string }}</h1>
 {{ fig|safe }}
+<h1>Was wissen wir über die letzten Jahre?</h1>
+<table>
+  {% for family in families %}
+    <tr><th colspan="3">{{ family }}</th></tr>
+    {% for key, values in family_overview[family].items() %}
+      <tr>
+    <th>{{ key }}</th>
+      {% for value in values %}
+        <td>
+        {{ value }}
+        </td>
+      {% endfor %}
+      </tr>
+    {% endfor %}
+  {% endfor %}
+</table>
 <button id="Enter" type="button" onclick="window.location.href = '/' ; " class="button-89">Zurück</button>
 <div class="update-date">
     Letztes Update: {{ update_date }}
