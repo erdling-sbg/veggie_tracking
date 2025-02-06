@@ -11,7 +11,7 @@ DATABASE = 'erdling.db'
 # Chart Color Dictionaries
 #
 crop_family_colors = {
-    'Brassiacaecaea':'#8dd3c7',
+    'Brassicaceae':'#8dd3c7',
     'Cucurbitaceae':'#fdb462',
     'Fabaceae':'#bebada',
     'Solanaceae':'#fb8072',
