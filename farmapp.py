@@ -17,7 +17,7 @@ crop_family_colors = {
     'Solanaceae':'#fb8072',
     'Asteraceae':'#b3de69',
     'Apiaceae':'#fccde5',
-    'Liliaceae':'#80b1d3',
+    'Allioideae':'#80b1d3',
     'Poaceae':'#ffffb3',
     'Amaranthaceae':'#bc80bd',
 }
