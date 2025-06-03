@@ -14,7 +14,9 @@
 {% endfor %}
 </div>
 {{ fig|safe }}
+<button id="Enter" type="button" onclick="window.location.href = '{{ url_for('beetID', ID = before_bed)}}' ;" class="button-89">Beet #{{ before_bed }}</button>
 <button id="Enter" type="button" onclick="window.location.href = '/' ; " class="button-89">Zurück</button>
+<button id="Enter" type="button" onclick="window.location.href = '{{ url_for('beetID', ID = after_bed)}}' ; " class="button-89">Beet #{{ after_bed }}</button>
 <div class="update-date">
     Letztes Update: {{ update_date }}
 </div>
