@@ -29,6 +29,41 @@ def insert_data(csv_dir, sheet_names):
         # Get the column names from the DataFrame
         columns = df.columns.tolist()
         id_col = columns[0]
+        #
+        # Check ID column for errors
+        #
+        exit_check = False
+        id_list = df[id_col].values.tolist() # get as list
+        id_list = [x for x in id_list if x != 'NaN'] # filter NaN
+        try:
+            id_list = [int(i) for i in id_list] # convert to int
+        except ValueError:
+            print("There is an invalid ID number in col {} in sheet {}, likely NaN".format(id_col, sheetname))
+            exit_check = True
+        id_list.sort() # sort ascending
+        maybe_missing = missing_number(id_list)
+        if len(maybe_missing) == 0:
+            continue
+        else:
+            print('Sheet {} is missing an expected ID in col {}: {}'.format(sheetname, id_col, str(maybe_missing)))
+            exit_check = True
+        # A set to keep track of elements that have been seen
+        seen = set()
+        # A list to store duplicates found in the input list
+        duplicates = []
+        # Iterate over each element in the list
+        for i in id_list:
+            if i in seen:
+                duplicates.append(i)
+            else:
+                seen.add(i)
+        if len(duplicates) == 0:
+            continue
+        else:
+            print('Sheet {} has ID duplicates in col {}: {}'.format(sheetname, id_col, str(duplicates)))
+            exit_check = True
+        if exit_check == True:
+            sys.exit()
         columns_str = ', '.join(columns)
         placeholders = ', '.join(['?'] * len(columns))
         # Load data file to SQLite as tmp table -- skip for now. Keep for reference.
@@ -55,3 +90,6 @@ def getGoogleSheet(spreadsheet_id, outDir, dict_of_sheets):
         else:
             print(f'Error downloading Google Sheet: {response.status_code}')
             sys.exit(1)
+
+def missing_number(myList): # myList is assumed to be sorted ascending
+    return sorted(set(myList).symmetric_difference(range((myList[0]), myList[-1]+1)))
