@@ -8,6 +8,7 @@ import plotly.graph_objects as go
 app = Flask(__name__)
 DATABASE = 'erdling.db'
 VIZ_START_DATE = '2024-01-01'
+
 #
 # Chart Color Dictionaries
 #
@@ -234,11 +235,31 @@ def beetID(ID):
     ))
     pd.set_option('colheader_justify', 'center')
     h1_str="Beet #{}".format(ID)
+    # Walkthrough buttons
+    # Decided not to use the function due to possible skipping of "empty" beds...
+    #list_of_active_beds = get_all_active_beds()
+    before_bed = None
+    after_bed = None
+    if int(ID) == 0:
+        before_bed = 51
+    elif int(ID) == 51:
+        before_bed = 0
+    else:
+        before_bed = int(ID) - 1
+    if int(ID) == 82:
+        after_bed = 41
+    elif int(ID) == 41:
+        after_bed = 82
+    else:
+        after_bed = int(ID) + 1
+
     return render_template(
         'bed_history.html',
         tables=[df_result.to_html(classes=['tablestyle', 'sortable'], header="true")],
         fig=new_fig.to_html(full_html=False),
         h1_string=h1_str,
+        after_bed = str(after_bed),
+        before_bed = str(before_bed),
         update_date = str(get_most_recent_update_date())
     )
 
@@ -387,6 +408,22 @@ def get_all_planted_crops():
     planted_crops = list(history)
     planted_crops = [crop[0] for crop in planted_crops]
     return planted_crops
+
+def get_all_active_beds():
+    sql_query = ('''SELECT DISTINCT BedID
+                        FROM (
+                            SELECT BedID, EndDate
+                            FROM Plantings
+                        UNION ALL
+                            SELECT BedID, EndDate
+                            FROM SoilImprovements)
+                    WHERE EndDate is NULL AND BedID is NOT NULL
+                    ORDER BY BedID ASC;
+                    ''')
+    cols, history = connect_execute_query(sql_query)
+    tracked_beds = list(history)
+    tracked_beds = [bed[0] for bed in tracked_beds]
+    return tracked_beds
 
 def get_most_recent_update_date():
     sql_query = ('''SELECT Plantings.StartDate, Plantings.EndDate, SoilImprovements.StartDate as StartDate2, SoilImprovements.EndDate as Enddate2
