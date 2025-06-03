@@ -7,6 +7,7 @@ import plotly.graph_objects as go
 
 app = Flask(__name__)
 DATABASE = 'erdling.db'
+VIZ_START_DATE = '2024-01-01'
 #
 # Chart Color Dictionaries
 #
@@ -89,14 +90,11 @@ def kulturname(kultur_name):
     df_result = df_crop.where(df_crop.notnull(), '')
     # Generate figure -- allow modifications for figure visualisation by creating copy.
     df_fig = df_result.copy(deep=True)
-    today = datetime.today().strftime('%Y-%m-%d')
-    year_start = datetime.today().strftime('%Y-01-01')
     # Change to give enddate to everything, now that database is more consistent.
+    today = datetime.today().strftime('%Y-%m-%d')
     df_fig.loc[
-        (
-            #(df_fig['StartDate'] >= year_start) &
             (df_fig['EndDate'] == '')
-            ), 'EndDate'
+            , 'EndDate'
         ] = today
     fig = px.timeline(
         df_fig,
@@ -115,7 +113,7 @@ def kulturname(kultur_name):
         'plot_bgcolor': 'rgb(234,216,192)',
         'paper_bgcolor': 'rgba(0, 0, 0, 0)'
     })
-    fig.update_xaxes(range=['2024-01-01', f'{today}'], fixedrange=True)
+    fig.update_xaxes(range=[VIZ_START_DATE, f'{today}'], fixedrange=True)
     fig.update_yaxes(fixedrange=True)
     # Points for starting dates
     dia = px.scatter(
@@ -174,9 +172,12 @@ def beetID(ID):
     # Figure stuff
     df_fig = df_result.copy(deep=True)
     #df_fig = df_fig.drop(df_fig[df_fig['ImprovementName'] != ''].index)
+    # Set end date to today for anything that doesn't have one
     today = datetime.today().strftime('%Y-%m-%d')
-    year_start = datetime.today().strftime('%Y-01-01')
-    df_fig.loc[((df_fig['StartDate'] >= year_start) & (df_fig['EndDate'] == '')), 'EndDate'] = today
+    df_fig.loc[
+            (df_fig['EndDate'] == '')
+            , 'EndDate'
+        ] = today
     fig = px.timeline(
         df_fig.loc[df_fig['ImprovementName'] == ''],
         x_start="StartDate",
@@ -194,7 +195,7 @@ def beetID(ID):
         'plot_bgcolor': 'rgb(234,216,192)',
         'paper_bgcolor': 'rgba(0, 0, 0, 0)'
     })
-    fig.update_xaxes(range=['2024-01-01', f'{today}'], fixedrange=True)
+    fig.update_xaxes(range=[VIZ_START_DATE, f'{today}'], fixedrange=True)
     fig.update_yaxes(fixedrange=True)
     dia = px.scatter(
         df_fig.loc[df_fig['ImprovementName'] == ''],
