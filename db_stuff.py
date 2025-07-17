@@ -42,9 +42,7 @@ def insert_data(csv_dir, sheet_names):
             exit_check = True
         id_list.sort() # sort ascending
         maybe_missing = missing_number(id_list)
-        if len(maybe_missing) == 0:
-            continue
-        else:
+        if len(maybe_missing) != 0:
             print('Sheet {} is missing an expected ID in col {}: {}'.format(sheetname, id_col, str(maybe_missing)))
             exit_check = True
         # A set to keep track of elements that have been seen
@@ -57,9 +55,7 @@ def insert_data(csv_dir, sheet_names):
                 duplicates.append(i)
             else:
                 seen.add(i)
-        if len(duplicates) == 0:
-            continue
-        else:
+        if len(duplicates) != 0:
             print('Sheet {} has ID duplicates in col {}: {}'.format(sheetname, id_col, str(duplicates)))
             exit_check = True
         if exit_check == True:
