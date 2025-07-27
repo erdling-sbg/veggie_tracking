@@ -270,7 +270,7 @@ def anbau_view():
     anbau_cols, anbau_data = get_all_anbau_info()
     df_anbau = pd.DataFrame(anbau_data, columns=anbau_cols)
     df_anbau = df_anbau.where(df_anbau.notnull(), '')
-    anbau_fig = make_anbau_figure(df_anbau, 3000, grouped=False)
+    anbau_fig = make_anbau_figure_overview(df_anbau, 3000, grouped=False)
     anbau_fig.add_vline(x=today, line_width=3, line_color="black")
     family_overview = get_family_anbau_overview(list(crop_family_colors.keys()))
     families = family_overview.keys()
@@ -336,30 +336,27 @@ def get_family_anbau_overview(family_list):
         df_crop = pd.DataFrame(crop_data, columns=crop_cols)
         df_crop = df_crop.sort_values(by=['BedID'], ascending=True)
         df_result = df_crop.where(df_crop.notnull(), '')
-        # Create list of all beds for future planning calculation
-        empty_year_list = empty_year_list_gen()
+        # Create family dictionary if first round
+        if family not in family_overview:
+            family_overview[family] = {}
         # Sort data from database into dictionary
         for index, row in df_result.iterrows():
+            # Get information per row
             bedid = str(row["BedID"])
             family = row["CropFamilie"]
             yyyy, mm, dd = row["StartDate"].split("-")
-            if family not in family_overview:
-                family_overview[family] = {}
-            if "Beete für 2025" not in family_overview[family]:
-                family_overview[family]["Beete für 2025"] = empty_year_list
+            # Create year dictionary if first time
             if yyyy not in family_overview[family]:
                 family_overview[family][yyyy] = []
+            # Get list of beds in that year
             bed_list = family_overview[family][yyyy]
-            possible_2025 = family_overview[family]["Beete für 2025"]
+            # Add each bed used per year based on existing database
             if bedid not in bed_list:
                 bed_list.append(bedid)
                 family_overview[family][yyyy] = bed_list
-            if (bedid in bed_list) and (bedid in possible_2025):
-                possible_2025.remove(bedid)
-                family_overview[family]["Beete für 2025"] = possible_2025
-        family_overview[family]["2023 Anzahl"] = [len(family_overview[family]["2023"]),]
-        family_overview[family]["2024 Anzahl"] = [len(family_overview[family]["2024"]),]
-        family_overview[family]["Beete für 2025 Anzahl"] = [len(family_overview[family]["Beete für 2025"]),]
+        for year in list(family_overview[family]):
+            anzahl_str = "{} Anzahl".format(year)
+            family_overview[family][anzahl_str] = [len(family_overview[family][year]),]
         family_overview[family] = dict(sorted(family_overview[family].items()))
     family_overview = dict(sorted(family_overview.items()))
     return family_overview
@@ -470,11 +467,48 @@ def make_anbau_figure(df, height, grouped=True):
         'paper_bgcolor': 'rgba(0, 0, 0, 0)',
         'height': height
         })
-    combined_figure.update_xaxes(range=['2024-01-01', '2024-12-31'], fixedrange=True)
+    combined_figure.update_xaxes(range=['2025-01-01', '2025-12-31'], fixedrange=True)
     combined_figure.update_yaxes(autorange="reversed", fixedrange=True)
     if grouped == True:
         combined_figure.update_layout({'barmode':'group'})
     return combined_figure
+
+def make_anbau_figure_overview(df, height, grouped=True):
+    fig0 = create_anbau_partial_figure_width(df, "SäenVorziehenStart", "SäenVorziehenEnde", solarised_colors['violet'], 1)
+    fig1 = create_anbau_partial_figure_width(df, "SäenDirektStart1", "SäenDirektEnde1", solarised_colors['red'], 0.8)
+    fig2 = create_anbau_partial_figure_width(df, "SäenDirektStart2", "SäenDirektEnde2", solarised_colors['red'], 0.8)
+    fig3 = create_anbau_partial_figure_width(df, "SetzenStart1", "SetzenEnde1", solarised_colors['yellow'], 0.5)
+    fig4 = create_anbau_partial_figure_width(df, "SetzenStart2", "SetzenEnde2", solarised_colors['yellow'], 0.5)
+    fig5 = create_anbau_partial_figure_width(df, "SteckenStart1", "SteckenEnde1", solarised_colors['blue'], 0.4)
+    fig6 = create_anbau_partial_figure_width(df, "ErntefensterStart1", "ErntefensterEnde1", solarised_colors['green'], 0.3)
+    fig7 = create_anbau_partial_figure_width(df, "ErntefensterStart2", "ErntefensterEnde2", solarised_colors['green'], 0.3)
+    combined_figure = go.Figure(data=fig0.data + fig1.data + fig2.data + fig3.data + fig4.data + fig5.data + fig6.data+ fig7.data, layout=fig0.layout)
+    combined_figure.update_layout({
+        'plot_bgcolor': 'rgb(234,216,192)',
+        'paper_bgcolor': 'rgba(0, 0, 0, 0)',
+        'height': height
+        })
+    combined_figure.update_xaxes(range=['2025-01-01', '2025-12-31'], fixedrange=True)
+    combined_figure.update_yaxes(autorange="reversed", fixedrange=True)
+    if grouped == True:
+        combined_figure.update_layout({'barmode':'group'})
+    return combined_figure
+
+
+def create_anbau_partial_figure_width(df, start, end, marker_clr, bar_width=1):
+    fig = px.timeline(
+        df,
+        x_start=start,
+        x_end=end,
+        y="CropName",
+        labels={
+            "CropName": "Kulturnamen"
+        }
+    )
+    fig.update_traces(marker_color=marker_clr)
+    for i, d in enumerate(fig.data):
+        d.width = bar_width
+    return fig
 
 def create_anbau_partial_figure(df, start, end, marker_clr):
     fig = px.timeline(
