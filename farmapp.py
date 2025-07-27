@@ -494,7 +494,6 @@ def make_anbau_figure_overview(df, height, grouped=True):
         combined_figure.update_layout({'barmode':'group'})
     return combined_figure
 
-
 def create_anbau_partial_figure_width(df, start, end, marker_clr, bar_width=1):
     fig = px.timeline(
         df,
