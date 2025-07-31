@@ -293,10 +293,15 @@ def folien_view():
     df_folien = df_folien.loc[df_folien['EndDate'] == '']
     df_folien["Tage drauf"] = ((datetime.today() - pd.to_datetime(df_folien['StartDate'], format='%Y-%m-%d')).dt.days)
     df_folien = df_folien.drop(['EndDate'], axis=1)
+    # make index match count
+    df_folien= df_folien.reset_index(drop=True)
+    # Get number of rows/tarps
+    num_tarps = df_folien.shape[0]
     return render_template(
         'folien_history.html',
         tables=[df_folien.to_html(classes=['tablestyle', 'sortable'], header="true")],
         h1_string="Seit wann liegen schwarze Folien?",
+        num_tarps = num_tarps,
         update_date = str(get_most_recent_update_date())
     )
 
