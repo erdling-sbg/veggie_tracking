@@ -8,6 +8,7 @@
 <link rel="stylesheet" type="text/css" href= "{{ url_for('static',filename='styles/df_style.css') }}">
 <body>
     <h1>{{ h1_string }}</h1>
+    <p class="center-bold">Verwendete Folien = {{num_tarps}}</p>
     <div class="table-wrapper">
 {% for table in tables %}
             {{ table|safe }}

@@ -25,6 +25,15 @@ p {
   font-style: italic;
 }
 
+.center-bold {
+  text-align: center;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  margin-right: 20px;
+  margin-left: 20px;
+  font-style: bold;
+}
+
   /* Make width responsive (horizontal sliding bar)  */
 .table-wrapper {
     width: 100%;
