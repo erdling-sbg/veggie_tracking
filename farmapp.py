@@ -290,15 +290,31 @@ def beetID(ID):
     else:
         after_bed = int(ID) + 1
     h1_wasanbau_str = f"Was wurde in Beet #{ID} überhaupt angebaut?"
+    #
     # Generate harvest table.
+    #
     harvest_table = get_bed_from_harvest_table(generate_harvest_table(), int(ID))
-    harvest_str = f'Gibt es etwas in diesem Beet zum Ernten?'
+    harvest_str = f'Gibt es in diesem Beet etwas zum Ernten?'
+    #
+    # Get crops to harvest, or none.
+    #
+    priority_info = str()
+    if harvest_table.shape[0] == 0:
+        priority_info = 'Nein.'
+    else:
+        harvest_table_filtered = harvest_table.loc[(harvest_table['ErnteStatus'] == "1: Zum Ernten")]
+        if harvest_table_filtered.shape[0] == 0:
+            priority_info = 'Vielleicht.'
+        else:
+            harvest_set = str(set(harvest_table_filtered['CropName'].values)).replace('{', '').replace('}', '').replace("'", '')
+            priority_info = f"Ja! Es gibt: <mark>{harvest_set}</mark>"
 
     return render_template(
         'bed_history.html',
         tables=[df_result.to_html(classes=['tablestyle', 'sortable'], header="true")],
         fig=new_fig.to_html(full_html=False),
         h1_string=h1_str,
+        priority_info=priority_info,
         harvest_tables=[harvest_table.to_html(classes=['tablestyle', 'sortable'], header="true")],
         harvest_str=harvest_str,
         h1_wasanbau_str=h1_wasanbau_str,

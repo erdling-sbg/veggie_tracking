@@ -9,6 +9,7 @@
 <body>
     <h1>{{ h1_string }}</h1>
     <h1>{{ harvest_str }}*</h1>
+    <h2>{{ priority_info|safe }}</h2>
     <div class="table-wrapper">
         {% for table in harvest_tables %}
             {{ table|safe }}
