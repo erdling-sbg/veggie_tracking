@@ -285,7 +285,22 @@ def beetID(ID):
         update_date = str(get_most_recent_update_date())
     )
 
-# Go to kulturname URL to retrieve info.
+@app.route('/ernteliste', methods=("POST", "GET"))
+def ernteliste_table():
+    df_harvest = generate_harvest_table()
+    # Filter just for erntable or unknowns...
+    df_harvest = df_harvest.loc[
+        ((df_harvest['ErnteStatus'] == "1: Zum Ernten") | (df_harvest['ErnteStatus'] == "2: Keine Ahnung"))
+    ]
+    df_harvest = df_harvest.reset_index(drop=True)
+    df_harvest = df_harvest.sort_values(by=['CropName', 'ErnteStatus', 'TageNachReife'], ascending=[True, True, False])
+
+    return render_template(
+        'ernteliste.html',
+        harvest_tables=[df_harvest.to_html(classes=['tablestyle', 'sortable'], header="true")],
+        update_date = str(get_most_recent_update_date())
+    )
+
 @app.route('/anbau', methods=("POST", "GET"))
 def anbau_view():
     today = datetime.today().strftime('%Y-%m-%d')
