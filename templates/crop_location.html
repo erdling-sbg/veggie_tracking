@@ -9,6 +9,7 @@
 <body>
     <h1>{{ h1_string }}</h1>
     <h1>{{ h1_harvest_str }}*</h1>
+    <h2>{{ priority_info|safe }}</h2>
     <div class="table-wrapper">
         {% for table in harvest_tables %}
             {{ table|safe }}
@@ -18,6 +19,7 @@
     <h1>{{ h1_woanbau_str }}</h1>
     {{ fig|safe }}
     <div class="table-wrapper">
+        <h3>Details</h3>
         {% for table in tables %}
             {{ table|safe }}
         {% endfor %}

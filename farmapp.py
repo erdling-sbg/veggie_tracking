@@ -155,6 +155,27 @@ def kulturname(kultur_name):
     #
     harvest_table = get_crop_from_harvest_table(generate_harvest_table(), kultur_name)
     h1_harvest_str = f"Gibt es {kultur_name} zum ernten?"
+    #
+    # Get bed with longest history, or none.
+    #
+    priority_info = str()
+    if harvest_table.shape[0] == 0:
+        priority_info = 'Nein.'
+    else:
+        harvest_table_filtered = harvest_table.loc[(harvest_table['ErnteStatus'] == "1: Zum Ernten")]
+        if harvest_table_filtered.shape[0] == 0:
+            priority_info = 'Vielleicht.'
+        else:
+            most_days = harvest_table_filtered['TageNachReife'].max()
+            harvest_prio = harvest_table_filtered[harvest_table_filtered['TageNachReife'] == most_days]
+            harvest_rest = harvest_table_filtered[harvest_table_filtered['TageNachReife'] != most_days]
+            harvest_rest_set = set(harvest_rest['BedID'].values)
+            prio_beds_list = str(set(harvest_prio['BedID'].values)).replace('{', '').replace('}', '')
+            priority_info = f"Ja! Hier zuerst ernten: <mark>{prio_beds_list}</mark>"
+            if len(harvest_rest_set) >= 1:
+                add_str = f"</br> und dann in dieser Reihenfolge weiterschauen: <mark>{str(harvest_rest_set).replace('{', '').replace('}', '')}</mark>"
+                priority_info += add_str
+
     return render_template(
         'crop_location.html', tables=[df_result.to_html(classes=['tablestyle', 'sortable'], header="true")],
         fig=new_fig.to_html(full_html=False),
@@ -163,6 +184,7 @@ def kulturname(kultur_name):
         h1_anbau_str=h1_anbau_str,
         h1_harvest_str=h1_harvest_str,
         h1_woanbau_str=h1_woanbau_str,
+        priority_info=priority_info,
         harvest_tables=[harvest_table.to_html(classes=['tablestyle', 'sortable'], header="true")],
         good_neighbors=str(df_anbau['NachbarnGut'][0]),
         bad_neighbors=str(df_anbau['NachbarnSchlecht'][0]),
