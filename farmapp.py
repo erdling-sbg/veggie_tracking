@@ -267,12 +267,19 @@ def beetID(ID):
         after_bed = 82
     else:
         after_bed = int(ID) + 1
+    h1_wasanbau_str = f"Was wurde in Beet #{ID} überhaupt angebaut?"
+    # Generate harvest table.
+    harvest_table = get_bed_from_harvest_table(generate_harvest_table(), int(ID))
+    harvest_str = f'Gibt es etwas in diesem Beet zum Ernten?'
 
     return render_template(
         'bed_history.html',
         tables=[df_result.to_html(classes=['tablestyle', 'sortable'], header="true")],
         fig=new_fig.to_html(full_html=False),
         h1_string=h1_str,
+        harvest_tables=[harvest_table.to_html(classes=['tablestyle', 'sortable'], header="true")],
+        harvest_str=harvest_str,
+        h1_wasanbau_str=h1_wasanbau_str,
         after_bed = str(after_bed),
         before_bed = str(before_bed),
         update_date = str(get_most_recent_update_date())
@@ -420,14 +427,23 @@ def generate_harvest_table():
     return df_harvest
 
 def get_crop_from_harvest_table(df_harvest, kultur_name):
-    df_crop = df_harvest.loc[df_harvest['CropName'] == kultur_name]
+    df_harvest = df_harvest.loc[df_harvest['CropName'] == kultur_name]
     # Filter just for erntable or unknowns...
-    df_crop = df_crop.loc[
+    df_harvest = df_harvest.loc[
         ((df_harvest['ErnteStatus'] == "1: Zum Ernten") | (df_harvest['ErnteStatus'] == "2: Keine Ahnung"))
     ]
-    df_crop = df_crop.reset_index(drop=True)
+    df_harvest = df_harvest.reset_index(drop=True)
     # TODO: add logic depending on number of rows to prioritise what to harvest.
-    return df_crop
+    return df_harvest
+
+def get_bed_from_harvest_table(df_harvest, ID):
+    df_harvest = df_harvest.loc[df_harvest['BedID'] == ID]
+    # Filter just for erntable or unknowns...
+    df_harvest = df_harvest.loc[
+        ((df_harvest['ErnteStatus'] == "1: Zum Ernten") | (df_harvest['ErnteStatus'] == "2: Keine Ahnung"))
+    ]
+    df_harvest = df_harvest.reset_index(drop=True)
+    return df_harvest
 
 def get_family_anbau_overview(family_list):
     family_overview = {}
