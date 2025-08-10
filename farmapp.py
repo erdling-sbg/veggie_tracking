@@ -154,7 +154,7 @@ def kulturname(kultur_name):
     # Harvest information.
     #
     harvest_table = get_crop_from_harvest_table(generate_harvest_table(), kultur_name)
-    h1_harvest_str = f"Gibt es {kultur_name} zum ernten?"
+    h1_harvest_str = f"Gibt es {kultur_name} zum Ernten?"
     #
     # Get bed with longest history, or none.
     #
@@ -164,16 +164,16 @@ def kulturname(kultur_name):
     else:
         harvest_table_filtered = harvest_table.loc[(harvest_table['ErnteStatus'] == "1: Zum Ernten")]
         if harvest_table_filtered.shape[0] == 0:
-            priority_info = 'Vielleicht.'
+            priority_info = 'Vielleicht?'
         else:
             most_days = harvest_table_filtered['TageNachReife'].max()
             harvest_prio = harvest_table_filtered[harvest_table_filtered['TageNachReife'] == most_days]
             harvest_rest = harvest_table_filtered[harvest_table_filtered['TageNachReife'] != most_days]
-            harvest_rest_set = set(harvest_rest['BedID'].values)
+            harvest_rest_set = list(dict.fromkeys((harvest_rest['BedID'].values)))
             prio_beds_list = str(set(harvest_prio['BedID'].values)).replace('{', '').replace('}', '')
             priority_info = f"Ja! Hier zuerst ernten: <mark>{prio_beds_list}</mark>"
             if len(harvest_rest_set) >= 1:
-                add_str = f"</br> und dann in dieser Reihenfolge weiterschauen: <mark>{str(harvest_rest_set).replace('{', '').replace('}', '')}</mark>"
+                add_str = f"</br> und dann in dieser Reihenfolge weiterschauen: <mark>{str(harvest_rest_set).replace("[", '').replace("]", '').replace("'", '')}</mark>"
                 priority_info += add_str
 
     return render_template(
@@ -303,10 +303,11 @@ def beetID(ID):
         priority_info = 'Nein.'
     else:
         harvest_table_filtered = harvest_table.loc[(harvest_table['ErnteStatus'] == "1: Zum Ernten")]
+        harvest_table_filtered = harvest_table_filtered.sort_values(by=['TageNachReife'], ascending=[False])
         if harvest_table_filtered.shape[0] == 0:
-            priority_info = 'Vielleicht.'
+            priority_info = 'Vielleicht?'
         else:
-            harvest_set = str(set(harvest_table_filtered['CropName'].values)).replace('{', '').replace('}', '').replace("'", '')
+            harvest_set = str(list(dict.fromkeys((harvest_table_filtered['CropName'].values)))).replace("[", '').replace("]", '').replace("'", '')
             priority_info = f"Ja! Es gibt: <mark>{harvest_set}</mark>"
 
     return render_template(
