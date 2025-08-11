@@ -518,6 +518,11 @@ def generate_harvest_table():
     df_harvest['ErnteStatus'] = np.select(conditions, choices, default="2: Keine Ahnung")
     df_harvest = df_harvest.sort_values(by=['ErnteStatus', "TageNachReife", 'CropName'], ascending=[True, False, True])
 
+    df_harvest = df_harvest.astype({
+    'TageNachStart': 'int',
+    'TagezurReife': 'int',
+    'TageNachReife': 'int',
+    })
     return df_harvest
 
 def get_crop_from_harvest_table(df_harvest, kultur_name):
