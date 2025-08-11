@@ -364,10 +364,10 @@ def ernteliste_table():
             if prio_bed in harvest_rest_list:
                 harvest_rest_list.remove(prio_bed)
         priority_info = str()
-        prio_bit = str(repr(prio_beds_list)).replace("[", '').replace("]", '').replace("'", '')
+        prio_bit = str(prio_beds_list).replace("[", '').replace("]", '').replace("'", '')
         priority_info = f"<mark>{prio_bit}</mark>"
         if len(harvest_rest_list) >= 1:
-            add_str_bit = str(repr(harvest_rest_list)).replace("[", '').replace("]", '').replace("'", '')
+            add_str_bit = str(harvest_rest_list).replace("[", '').replace("]", '').replace("'", '')
             add_str = f", <i><small>aber auch: <mark>{add_str_bit}</mark></small></i>"
             priority_info += add_str
         harvestable_dict[veggie] = priority_info
