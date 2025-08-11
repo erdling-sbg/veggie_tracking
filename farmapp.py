@@ -174,9 +174,9 @@ def kulturname(kultur_name):
             for prio_bed in prio_beds_list:
                 if prio_bed in harvest_rest_list:
                     harvest_rest_list.remove(prio_bed)
-            priority_info = "Ja! Hier zuerst ernten: <mark>" + str(prio_beds_list).replace("[", '').replace("]", '').replace("'", '') + "</mark>"
+            priority_info = "Ja! Hier zuerst ernten: <mark>" + str(prio_beds_list).replace("[", '').replace("]", '').replace("'", '').replace("np.int64(", '').replace(")", '') + "</mark>"
             if len(harvest_rest_list) >= 1:
-                add_str = "</br> und dann in dieser Reihenfolge weiterschauen: <mark>" + str(harvest_rest_list).replace("[", '').replace("]", '').replace("'", '') + "</mark>"
+                add_str = "</br> und dann in dieser Reihenfolge weiterschauen: <mark>" + str(harvest_rest_list).replace("[", '').replace("]", '').replace("'", '').replace("np.int64(", '').replace(")", '') + "</mark>"
                 priority_info += add_str
 
     return render_template(
@@ -356,9 +356,9 @@ def ernteliste_table():
             if prio_bed in harvest_rest_list:
                 harvest_rest_list.remove(prio_bed)
         priority_info = str()
-        priority_info = f"""<mark>{str(prio_beds_list).replace("[", '').replace("]", '').replace("'", '')}</mark>"""
+        priority_info = f"""<mark>{str(prio_beds_list).replace("[", '').replace("]", '').replace("'", '').replace("np.int64(", '').replace(")", '')}</mark>"""
         if len(harvest_rest_list) >= 1:
-            add_str = f""", <i><small>aber auch: <mark>{str(harvest_rest_list).replace("[", '').replace("]", '').replace("'", '')}</mark></small></i>"""
+            add_str = f""", <i><small>aber auch: <mark>{str(harvest_rest_list).replace("[", '').replace("]", '').replace("'", '').replace("np.int64(", '').replace(")", '')}</mark></small></i>"""
             priority_info += add_str
         harvestable_dict[veggie] = priority_info
         harvest_text += f"</br>{veggie}: {priority_info}"
