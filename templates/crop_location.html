@@ -24,14 +24,16 @@
             {{ table|safe }}
         {% endfor %}
     </div>
-
+    <div style="text-align: center;">
+        <div style="display: inline-block; text-align: left;">
+            <p>Gute Nachbarn: {{ good_neighbors }}</p>
+            <p>Schlechte Nachbarn: {{ bad_neighbors }}</p>
+            <p>{{intensity}}zehrer</p>
+        </div>
+    </div>
     <h1>{{h1_anbau_str}}</h1>
     {{ anbau_fig|safe }}
-    <div>
-        <p>Gute Nachbarn: {{good_neighbors}}</p>
-        <p>Schlechte Nachbarn: {{bad_neighbors}}</p>
-        <p>{{intensity}}zehrer</p>
-    </div>
+
     <button id="Enter" type="button" onclick="window.location.href = '/' ; " class="button-89">Zurück</button>
     <div class="update-date">
         Letztes Update: {{ update_date }}

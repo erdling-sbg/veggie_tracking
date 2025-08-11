@@ -164,16 +164,19 @@ def kulturname(kultur_name):
     else:
         harvest_table_filtered = harvest_table.loc[(harvest_table['ErnteStatus'] == "1: Zum Ernten")]
         if harvest_table_filtered.shape[0] == 0:
-            priority_info = 'Vielleicht?'
+            priority_info = 'Vielleicht? Ernteinfos fehlen.'
         else:
             most_days = harvest_table_filtered['TageNachReife'].max()
             harvest_prio = harvest_table_filtered[harvest_table_filtered['TageNachReife'] == most_days]
             harvest_rest = harvest_table_filtered[harvest_table_filtered['TageNachReife'] != most_days]
-            harvest_rest_set = list(dict.fromkeys((harvest_rest['BedID'].values)))
-            prio_beds_list = str(set(harvest_prio['BedID'].values)).replace('{', '').replace('}', '')
-            priority_info = f"Ja! Hier zuerst ernten: <mark>{prio_beds_list}</mark>"
-            if len(harvest_rest_set) >= 1:
-                add_str = f"</br> und dann in dieser Reihenfolge weiterschauen: <mark>{str(harvest_rest_set).replace("[", '').replace("]", '').replace("'", '')}</mark>"
+            harvest_rest_list = list(dict.fromkeys((harvest_rest['BedID'].values)))
+            prio_beds_list = list(dict.fromkeys((harvest_prio['BedID'].values)))
+            for prio_bed in prio_beds_list:
+                if prio_bed in harvest_rest_list:
+                    harvest_rest_list.remove(prio_bed)
+            priority_info = f"Ja! Hier zuerst ernten: <mark>{str(prio_beds_list).replace("[", '').replace("]", '').replace("'", '')}</mark>"
+            if len(harvest_rest_list) >= 1:
+                add_str = f"</br> und dann in dieser Reihenfolge weiterschauen: <mark>{str(harvest_rest_list).replace("[", '').replace("]", '').replace("'", '')}</mark>"
                 priority_info += add_str
 
     return render_template(
@@ -185,7 +188,7 @@ def kulturname(kultur_name):
         h1_harvest_str=h1_harvest_str,
         h1_woanbau_str=h1_woanbau_str,
         priority_info=priority_info,
-        harvest_tables=[harvest_table.to_html(classes=['tablestyle', 'sortable'], header="true")],
+        #harvest_tables=[harvest_table.to_html(classes=['tablestyle', 'sortable'], header="true")],
         good_neighbors=str(df_anbau['NachbarnGut'][0]),
         bad_neighbors=str(df_anbau['NachbarnSchlecht'][0]),
         intensity=str(df_anbau['Intensität'][0]),
@@ -305,7 +308,7 @@ def beetID(ID):
         harvest_table_filtered = harvest_table.loc[(harvest_table['ErnteStatus'] == "1: Zum Ernten")]
         harvest_table_filtered = harvest_table_filtered.sort_values(by=['TageNachReife'], ascending=[False])
         if harvest_table_filtered.shape[0] == 0:
-            priority_info = 'Vielleicht?'
+            priority_info = 'Vielleicht? Ernteinfos fehlen.'
         else:
             harvest_set = str(list(dict.fromkeys((harvest_table_filtered['CropName'].values)))).replace("[", '').replace("]", '').replace("'", '')
             priority_info = f"Ja! Es gibt: <mark>{harvest_set}</mark>"
@@ -316,7 +319,7 @@ def beetID(ID):
         fig=new_fig.to_html(full_html=False),
         h1_string=h1_str,
         priority_info=priority_info,
-        harvest_tables=[harvest_table.to_html(classes=['tablestyle', 'sortable'], header="true")],
+        #harvest_tables=[harvest_table.to_html(classes=['tablestyle', 'sortable'], header="true")],
         harvest_str=harvest_str,
         h1_wasanbau_str=h1_wasanbau_str,
         after_bed = str(after_bed),
@@ -333,9 +336,36 @@ def ernteliste_table():
     ]
     df_harvest = df_harvest.reset_index(drop=True)
     df_harvest = df_harvest.sort_values(by=['CropName', 'ErnteStatus', 'TageNachReife'], ascending=[True, True, False])
+    df_harvest = df_harvest.reset_index(drop=True)
+
+    df_harvest_text = df_harvest.loc[
+        (df_harvest['ErnteStatus'] == "1: Zum Ernten")
+    ]
+    harvestable_dict = dict.fromkeys((df_harvest_text['CropName'].values))
+    harvest_text = str()
+    for veggie in harvestable_dict.keys():
+        # Get subseet for veggie
+        df_harvest_text_veg = get_crop_from_harvest_table(df_harvest_text, veggie)
+        df_harvest_text_veg = df_harvest_text_veg.sort_values(by=['TageNachReife'], ascending=[False])
+        most_days = df_harvest_text_veg['TageNachReife'].max()
+        harvest_veg_prio = df_harvest_text_veg[df_harvest_text_veg['TageNachReife'] == most_days]
+        harvest_veg_rest = df_harvest_text_veg[df_harvest_text_veg['TageNachReife'] != most_days]
+        harvest_rest_list = list(dict.fromkeys((harvest_veg_rest['BedID'].values)))
+        prio_beds_list = list(dict.fromkeys((harvest_veg_prio['BedID'].values)))
+        for prio_bed in prio_beds_list:
+            if prio_bed in harvest_rest_list:
+                harvest_rest_list.remove(prio_bed)
+        priority_info = str()
+        priority_info = f"<mark>{str(prio_beds_list).replace("[", '').replace("]", '').replace("'", '')}</mark>"
+        if len(harvest_rest_list) >= 1:
+            add_str = f", <i><small>aber auch: <mark>{str(harvest_rest_list).replace("[", '').replace("]", '').replace("'", '')}</mark></small></i>"
+            priority_info += add_str
+        harvestable_dict[veggie] = priority_info
+        harvest_text += f"</br>{veggie}: {priority_info}"
 
     return render_template(
         'ernteliste.html',
+        harvest_text=harvest_text,
         harvest_tables=[df_harvest.to_html(classes=['tablestyle', 'sortable'], header="true")],
         update_date = str(get_most_recent_update_date())
     )

@@ -8,13 +8,19 @@
 <link rel="stylesheet" type="text/css" href= "{{ url_for('static',filename='styles/df_style.css') }}">
 <body>
     <h1>Aktuelle Ernteliste*</h1>
-    <i>* Ernteinfo noch in Entwicklung !!! Die Tage zur Reife sind noch allgemein pro Kultur und teilweise geschätzt.</i>
+    <i>*Ernteinfo noch in Entwicklung !!! Die Tage zur Reife sind noch allgemein pro Kultur und teilweise geschätzt.</i>
+    <div style="text-align: center;">
+        <div style="display: inline-block; text-align: left;">
+            <p>{{ harvest_text|safe }}</p>
+        </div>
+    </div>
+    <h3>Details</h3>
     <div class="table-wrapper">
         {% for table in harvest_tables %}
             {{ table|safe }}
         {% endfor %}
     </div>
-    <i>* Ernteinfo noch in Entwicklung !!! Die Tage zur Reife sind noch allgemein pro Kultur und teilweise geschätzt.</i>
+    <i>*Ernteinfo noch in Entwicklung !!! Die Tage zur Reife sind noch allgemein pro Kultur und teilweise geschätzt.</i>
     <div>
         <button id="Enter" type="button" onclick="window.location.href = '/' ; " class="button-89">Zurück</button>
     </div>
