@@ -479,9 +479,9 @@ def generate_harvest_table():
     # Calculate days from start
     df_harvest["TageNachStart"] = df_harvest.loc[:, "StartDate"].map(days_from_start)
     # Fill nodata to 0.0 numeric type
-    df_harvest['TagezurReifeGesäet'] = df_harvest['TagezurReifeGesäet'].apply(pd.to_numeric, errors='coerce').fillna(0)
-    df_harvest['TagezurReifeGesetzt'] = df_harvest['TagezurReifeGesetzt'].apply(pd.to_numeric, errors='coerce').fillna(0)
-    df_harvest['TagezurReifeGesteckt'] = df_harvest['TagezurReifeGesteckt'].apply(pd.to_numeric, errors='coerce').fillna(0)
+    df_harvest['TagezurReifeGesäet'] = df_harvest['TagezurReifeGesäet'].apply(pd.to_numeric, errors='coerce', downcast='integer').fillna(0)
+    df_harvest['TagezurReifeGesetzt'] = df_harvest['TagezurReifeGesetzt'].apply(pd.to_numeric, errors='coerce', downcast='integer').fillna(0)
+    df_harvest['TagezurReifeGesteckt'] = df_harvest['TagezurReifeGesteckt'].apply(pd.to_numeric, errors='coerce', downcast='integer').fillna(0)
     
     # Get days to harvest depending on planting method
     conditions = [
