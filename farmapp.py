@@ -174,9 +174,11 @@ def kulturname(kultur_name):
             for prio_bed in prio_beds_list:
                 if prio_bed in harvest_rest_list:
                     harvest_rest_list.remove(prio_bed)
+            prio_beds_list = [str(int(x)) for x in prio_beds_list]
             prio_bit = str(prio_beds_list).replace("[", '').replace("]", '').replace("'", '')
             priority_info = f"Ja! Hier zuerst ernten: <mark>{prio_bit}</mark>"
             if len(harvest_rest_list) >= 1:
+                harvest_rest_list = [str(int(x)) for x in harvest_rest_list]
                 add_str_bit = str(harvest_rest_list).replace("[", '').replace("]", '').replace("'", '')
                 add_str = f"</br> und dann in dieser Reihenfolge weiterschauen: <mark>{add_str_bit}</mark>"
                 priority_info += add_str
@@ -358,9 +360,11 @@ def ernteliste_table():
             if prio_bed in harvest_rest_list:
                 harvest_rest_list.remove(prio_bed)
         priority_info = str()
+        prio_beds_list = [str(int(x)) for x in prio_beds_list]
         prio_bit = str(prio_beds_list).replace("[", '').replace("]", '').replace("'", '')
         priority_info = f"<mark>{prio_bit}</mark>"
         if len(harvest_rest_list) >= 1:
+            harvest_rest_list = [str(int(x)) for x in harvest_rest_list]
             add_str_bit = str(harvest_rest_list).replace("[", '').replace("]", '').replace("'", '')
             add_str = f", <i><small>aber auch: <mark>{add_str_bit}</mark></small></i>"
             priority_info += add_str
@@ -478,7 +482,7 @@ def generate_harvest_table():
 
     # Calculate days from start
     df_harvest["TageNachStart"] = df_harvest.loc[:, "StartDate"].map(days_from_start)
-    # Fill nodata to 0.0 numeric type
+    # Fill nodata to 0.0 numeric typed
     df_harvest['TagezurReifeGesäet'] = df_harvest['TagezurReifeGesäet'].apply(pd.to_numeric, errors='coerce', downcast='integer').fillna(0)
     df_harvest['TagezurReifeGesetzt'] = df_harvest['TagezurReifeGesetzt'].apply(pd.to_numeric, errors='coerce', downcast='integer').fillna(0)
     df_harvest['TagezurReifeGesteckt'] = df_harvest['TagezurReifeGesteckt'].apply(pd.to_numeric, errors='coerce', downcast='integer').fillna(0)
