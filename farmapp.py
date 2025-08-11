@@ -1,5 +1,6 @@
 from flask import Flask, g, jsonify, request, render_template, redirect, url_for
 import os, sqlite3
+import numpy as np
 import pandas as pd
 from datetime import datetime
 import plotly.express as px
@@ -85,13 +86,18 @@ def my_form_post():
 # Go to kulturname URL to retrieve info.
 @app.route('/kulturname/<kultur_name>', methods=("POST", "GET"))
 def kulturname(kultur_name):
+    #
+    # Get planting information
+    #
     crop_cols, crop_data = get_specific_crop(kultur_name)
     df_crop = pd.DataFrame(crop_data, columns=crop_cols)
     df_crop = df_crop.sort_values(by=['StartDate'], ascending=False)
     df_result = df_crop.where(df_crop.notnull(), '')
+    #
     # Generate figure -- allow modifications for figure visualisation by creating copy.
+    #
     df_fig = df_result.copy(deep=True)
-    # Change to give enddate to everything, now that database is more consistent.
+    # Change to give enddate to everything for the figure (otherwise timeline bars don't display)
     today = datetime.today().strftime('%Y-%m-%d')
     df_fig.loc[
             (df_fig['EndDate'] == '')
@@ -116,7 +122,7 @@ def kulturname(kultur_name):
     })
     fig.update_xaxes(range=[VIZ_START_DATE, f'{today}'], fixedrange=True)
     fig.update_yaxes(fixedrange=True)
-    # Points for starting dates
+    # Points for each starting date
     dia = px.scatter(
         df_fig,
         x="StartDate",
@@ -136,19 +142,53 @@ def kulturname(kultur_name):
     x=1
     ))
     pd.set_option('colheader_justify', 'center')
-    h1_str="Crop: {}".format(kultur_name)
+    h1_str="Kultur: {}".format(kultur_name)
     anbau_cols, anbau_data = get_anbau_info(kultur_name)
     df_anbau = pd.DataFrame(anbau_data, columns=anbau_cols)
     df_anbau = df_anbau.where(df_anbau.notnull(), '')
     anbau_fig = make_anbau_figure(df_anbau, 400)
     anbau_fig.add_vline(x=today, line_width=3, line_color="black")
     h1_anbau_str = f"Wann bauen die Erdlinge {kultur_name} an?"
+    h1_woanbau_str = f"Wo hat man {kultur_name} angebaut?"
+    #
+    # Harvest information.
+    #
+    harvest_table = get_crop_from_harvest_table(generate_harvest_table(), kultur_name)
+    h1_harvest_str = f"Gibt es {kultur_name} zum Ernten?"
+    #
+    # Get bed with longest history, or none.
+    #
+    priority_info = str()
+    if harvest_table.shape[0] == 0:
+        priority_info = 'Nein.'
+    else:
+        harvest_table_filtered = harvest_table.loc[(harvest_table['ErnteStatus'] == "1: Zum Ernten")]
+        if harvest_table_filtered.shape[0] == 0:
+            priority_info = 'Vielleicht? Ernteinfos fehlen.'
+        else:
+            most_days = harvest_table_filtered['TageNachReife'].max()
+            harvest_prio = harvest_table_filtered[harvest_table_filtered['TageNachReife'] == most_days]
+            harvest_rest = harvest_table_filtered[harvest_table_filtered['TageNachReife'] != most_days]
+            harvest_rest_list = list(dict.fromkeys((harvest_rest['BedID'].values)))
+            prio_beds_list = list(dict.fromkeys((harvest_prio['BedID'].values)))
+            for prio_bed in prio_beds_list:
+                if prio_bed in harvest_rest_list:
+                    harvest_rest_list.remove(prio_bed)
+            priority_info = f"Ja! Hier zuerst ernten: <mark>{str(prio_beds_list).replace("[", '').replace("]", '').replace("'", '')}</mark>"
+            if len(harvest_rest_list) >= 1:
+                add_str = f"</br> und dann in dieser Reihenfolge weiterschauen: <mark>{str(harvest_rest_list).replace("[", '').replace("]", '').replace("'", '')}</mark>"
+                priority_info += add_str
+
     return render_template(
         'crop_location.html', tables=[df_result.to_html(classes=['tablestyle', 'sortable'], header="true")],
         fig=new_fig.to_html(full_html=False),
         anbau_fig=anbau_fig.to_html(full_html=False),
         h1_string=h1_str,
         h1_anbau_str=h1_anbau_str,
+        h1_harvest_str=h1_harvest_str,
+        h1_woanbau_str=h1_woanbau_str,
+        priority_info=priority_info,
+        #harvest_tables=[harvest_table.to_html(classes=['tablestyle', 'sortable'], header="true")],
         good_neighbors=str(df_anbau['NachbarnGut'][0]),
         bad_neighbors=str(df_anbau['NachbarnSchlecht'][0]),
         intensity=str(df_anbau['Intensität'][0]),
@@ -252,18 +292,84 @@ def beetID(ID):
         after_bed = 82
     else:
         after_bed = int(ID) + 1
+    h1_wasanbau_str = f"Was wurde in Beet #{ID} überhaupt angebaut?"
+    #
+    # Generate harvest table.
+    #
+    harvest_table = get_bed_from_harvest_table(generate_harvest_table(), int(ID))
+    harvest_str = f'Gibt es in diesem Beet etwas zum Ernten?'
+    #
+    # Get crops to harvest, or none.
+    #
+    priority_info = str()
+    if harvest_table.shape[0] == 0:
+        priority_info = 'Nein.'
+    else:
+        harvest_table_filtered = harvest_table.loc[(harvest_table['ErnteStatus'] == "1: Zum Ernten")]
+        harvest_table_filtered = harvest_table_filtered.sort_values(by=['TageNachReife'], ascending=[False])
+        if harvest_table_filtered.shape[0] == 0:
+            priority_info = 'Vielleicht? Ernteinfos fehlen.'
+        else:
+            harvest_set = str(list(dict.fromkeys((harvest_table_filtered['CropName'].values)))).replace("[", '').replace("]", '').replace("'", '')
+            priority_info = f"Ja! Es gibt: <mark>{harvest_set}</mark>"
 
     return render_template(
         'bed_history.html',
         tables=[df_result.to_html(classes=['tablestyle', 'sortable'], header="true")],
         fig=new_fig.to_html(full_html=False),
         h1_string=h1_str,
+        priority_info=priority_info,
+        #harvest_tables=[harvest_table.to_html(classes=['tablestyle', 'sortable'], header="true")],
+        harvest_str=harvest_str,
+        h1_wasanbau_str=h1_wasanbau_str,
         after_bed = str(after_bed),
         before_bed = str(before_bed),
         update_date = str(get_most_recent_update_date())
     )
 
-# Go to kulturname URL to retrieve info.
+@app.route('/ernteliste', methods=("POST", "GET"))
+def ernteliste_table():
+    df_harvest = generate_harvest_table()
+    # Filter just for erntable or unknowns...
+    df_harvest = df_harvest.loc[
+        ((df_harvest['ErnteStatus'] == "1: Zum Ernten") | (df_harvest['ErnteStatus'] == "2: Keine Ahnung"))
+    ]
+    df_harvest = df_harvest.reset_index(drop=True)
+    df_harvest = df_harvest.sort_values(by=['CropName', 'ErnteStatus', 'TageNachReife'], ascending=[True, True, False])
+    df_harvest = df_harvest.reset_index(drop=True)
+
+    df_harvest_text = df_harvest.loc[
+        (df_harvest['ErnteStatus'] == "1: Zum Ernten")
+    ]
+    harvestable_dict = dict.fromkeys((df_harvest_text['CropName'].values))
+    harvest_text = str()
+    for veggie in harvestable_dict.keys():
+        # Get subseet for veggie
+        df_harvest_text_veg = get_crop_from_harvest_table(df_harvest_text, veggie)
+        df_harvest_text_veg = df_harvest_text_veg.sort_values(by=['TageNachReife'], ascending=[False])
+        most_days = df_harvest_text_veg['TageNachReife'].max()
+        harvest_veg_prio = df_harvest_text_veg[df_harvest_text_veg['TageNachReife'] == most_days]
+        harvest_veg_rest = df_harvest_text_veg[df_harvest_text_veg['TageNachReife'] != most_days]
+        harvest_rest_list = list(dict.fromkeys((harvest_veg_rest['BedID'].values)))
+        prio_beds_list = list(dict.fromkeys((harvest_veg_prio['BedID'].values)))
+        for prio_bed in prio_beds_list:
+            if prio_bed in harvest_rest_list:
+                harvest_rest_list.remove(prio_bed)
+        priority_info = str()
+        priority_info = f"<mark>{str(prio_beds_list).replace("[", '').replace("]", '').replace("'", '')}</mark>"
+        if len(harvest_rest_list) >= 1:
+            add_str = f", <i><small>aber auch: <mark>{str(harvest_rest_list).replace("[", '').replace("]", '').replace("'", '')}</mark></small></i>"
+            priority_info += add_str
+        harvestable_dict[veggie] = priority_info
+        harvest_text += f"</br>{veggie}: {priority_info}"
+
+    return render_template(
+        'ernteliste.html',
+        harvest_text=harvest_text,
+        harvest_tables=[df_harvest.to_html(classes=['tablestyle', 'sortable'], header="true")],
+        update_date = str(get_most_recent_update_date())
+    )
+
 @app.route('/anbau', methods=("POST", "GET"))
 def anbau_view():
     today = datetime.today().strftime('%Y-%m-%d')
@@ -333,6 +439,96 @@ def empty_year_list_gen(min_right=0, max_right_plus_one=43, min_left=51, max_lef
         empty_year_list.append(str(x))
     return empty_year_list
 
+def days_from_start(planting_date):
+    days = (datetime.strptime(planting_date, '%Y-%m-%d') - datetime.today()).days
+    days = abs(days)
+    return days
+
+def generate_harvest_table():
+    # Get planting info.
+    crop_cols, crop_data = get_all_unharvested_crops()
+    df_harvest = pd.DataFrame(crop_data, columns=crop_cols)
+    df_harvest = df_harvest.where(df_harvest.notnull(), '')
+    # Get harvestable plantings by having no EndDate
+    df_harvest = df_harvest.loc[df_harvest['EndDate'] == '']
+    df_harvest = df_harvest.copy(deep=True)
+
+    # Get Anbau Info
+    anbau_cols, anbau_data = get_all_anbau_info()
+    df_anbau = pd.DataFrame(anbau_data, columns=anbau_cols)
+    df_anbau = df_anbau.where(df_anbau.notnull(), '')
+    df_anbau = df_anbau.copy(deep=True)
+
+    # Merge
+    df_harvest = df_harvest.merge(df_anbau, how="inner", on="CropName")
+    desired_columns = [
+            "BedID",
+            "StartDate",
+            "CropName",
+            "CropSorte",
+            "PlantingMethod",
+            "TagezurReifeGesäet",
+            "TagezurReifeGesetzt",
+            "TagezurReifeGesteckt"    ]
+    df_harvest = df_harvest.get(desired_columns)
+
+    # Calculate days from start
+    df_harvest["TageNachStart"] = df_harvest.loc[:, "StartDate"].map(days_from_start)
+    # Fill nodata to 0.0 numeric type
+    df_harvest['TagezurReifeGesäet'] = df_harvest['TagezurReifeGesäet'].apply(pd.to_numeric, errors='coerce').fillna(0)
+    df_harvest['TagezurReifeGesetzt'] = df_harvest['TagezurReifeGesetzt'].apply(pd.to_numeric, errors='coerce').fillna(0)
+    df_harvest['TagezurReifeGesteckt'] = df_harvest['TagezurReifeGesteckt'].apply(pd.to_numeric, errors='coerce').fillna(0)
+    
+    # Get days to harvest depending on planting method
+    conditions = [
+        df_harvest['PlantingMethod'].eq('gesät'),
+        df_harvest['PlantingMethod'].eq('gesetzt'),
+        df_harvest['PlantingMethod'].eq('gesteckt')
+    ]
+    choices = [
+        df_harvest['TagezurReifeGesäet'],
+        df_harvest['TagezurReifeGesetzt'],
+        df_harvest['TagezurReifeGesteckt'],
+    ]
+    df_harvest['TagezurReife'] = np.select(conditions, choices, default=0)
+    df_harvest = df_harvest.drop(columns=["TagezurReifeGesäet", "TagezurReifeGesetzt", "TagezurReifeGesteckt"])
+    df_harvest['TageNachReife'] = df_harvest['TageNachStart'] - df_harvest['TagezurReife']
+
+    # Calculate whether harvestable
+    conditions = [
+        (df_harvest['TagezurReife'] < 1),
+        (df_harvest['TageNachStart']>= df_harvest['TagezurReife']),
+        (df_harvest['TageNachStart'] < df_harvest['TagezurReife']) & (df_harvest['TagezurReife'] >= 1),
+    ]
+    choices = [
+        "2: Keine Ahnung",
+        "1: Zum Ernten",
+        "3: Reift noch"
+    ]
+    df_harvest['ErnteStatus'] = np.select(conditions, choices, default=0)
+    df_harvest = df_harvest.sort_values(by=['ErnteStatus', "TageNachReife", 'CropName'], ascending=[True, False, True])
+
+    return df_harvest
+
+def get_crop_from_harvest_table(df_harvest, kultur_name):
+    df_harvest = df_harvest.loc[df_harvest['CropName'] == kultur_name]
+    # Filter just for erntable or unknowns...
+    df_harvest = df_harvest.loc[
+        ((df_harvest['ErnteStatus'] == "1: Zum Ernten") | (df_harvest['ErnteStatus'] == "2: Keine Ahnung"))
+    ]
+    df_harvest = df_harvest.reset_index(drop=True)
+    # TODO: add logic depending on number of rows to prioritise what to harvest.
+    return df_harvest
+
+def get_bed_from_harvest_table(df_harvest, ID):
+    df_harvest = df_harvest.loc[df_harvest['BedID'] == ID]
+    # Filter just for erntable or unknowns...
+    df_harvest = df_harvest.loc[
+        ((df_harvest['ErnteStatus'] == "1: Zum Ernten") | (df_harvest['ErnteStatus'] == "2: Keine Ahnung"))
+    ]
+    df_harvest = df_harvest.reset_index(drop=True)
+    return df_harvest
+
 def get_family_anbau_overview(family_list):
     family_overview = {}
     for family in family_list:
@@ -397,6 +593,16 @@ def get_specific_crop(crop_str):
                     on Plantings.CropID = Crops.CropID
                     WHERE LOWER(Crops.CropName) LIKE "{}"
                     ORDER BY StartDate DESC;''').format(crop_str)
+    cols, history = connect_execute_query(sql_query)
+    return cols, history
+
+def get_all_unharvested_crops():
+    sql_query = ('''SELECT BedID, StartDate, EndDate, Crops.CropName, CropSorte, CropFamilie, PlantingMethod, Plantings.Notizen
+                    FROM Plantings
+                    INNER JOIN Crops
+                    on Plantings.CropID = Crops.CropID
+                    WHERE Plantings.EndDate IS NULL
+                    ORDER BY StartDate DESC;''')
     cols, history = connect_execute_query(sql_query)
     return cols, history
 

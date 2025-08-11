@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ernteliste</title>
+</head>
+<link rel="stylesheet" type="text/css" href= "{{ url_for('static',filename='styles/df_style.css') }}">
+<body>
+    <h1>Aktuelle Ernteliste*</h1>
+    <i>*Ernteinfo noch in Entwicklung !!! Die Tage zur Reife sind noch allgemein pro Kultur und teilweise geschätzt.</i>
+    <div style="text-align: center;">
+        <div style="display: inline-block; text-align: left;">
+            <p>{{ harvest_text|safe }}</p>
+        </div>
+    </div>
+    <h3>Details</h3>
+    <div class="table-wrapper">
+        {% for table in harvest_tables %}
+            {{ table|safe }}
+        {% endfor %}
+    </div>
+    <i>*Ernteinfo noch in Entwicklung !!! Die Tage zur Reife sind noch allgemein pro Kultur und teilweise geschätzt.</i>
+    <div>
+        <button id="Enter" type="button" onclick="window.location.href = '/' ; " class="button-89">Zurück</button>
+    </div>
+    <div class="update-date">
+        Letztes Update: {{ update_date }}
+    </div>
+    <script src="https://www.kryogenix.org/code/browser/sorttable/sorttable.js"></script>
+</body>
+</html>

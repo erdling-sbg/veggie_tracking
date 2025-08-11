@@ -9,13 +9,16 @@
       <div>      
       <form method = "post">
          <h1>Was gibt's am Acker?</h1>
-         <h2>BeetID (0-90):</h2> 
+         <h2>Was kann man womöglich ernten?</h2>
+         <button id="Enter" type="button" onclick="window.location.href = '/ernteliste' ; " class="button-89">Zur Ernteliste</button>
+         <h2>Was gibt's im Beet #(0-90)?</h2> 
          <p><input type = "text" name = "bid" class="input"/></p>
          <p><input type = "submit" value = "Schau ma mal..." /></p>
       </form>
    </div>
       <div>
          <form method = "post" id="kulturname">
+            <h2>Was bauen wir an?</h2> 
          <div class="select">   
          <select name="kulturname" form="kulturname">
             {% for n in name %}
