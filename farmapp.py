@@ -505,7 +505,7 @@ def generate_harvest_table():
         "1: Zum Ernten",
         "3: Reift noch"
     ]
-    df_harvest['ErnteStatus'] = np.select(conditions, choices, default=0)
+    df_harvest['ErnteStatus'] = np.select(conditions, choices, default="2: Keine Ahnung")
     df_harvest = df_harvest.sort_values(by=['ErnteStatus', "TageNachReife", 'CropName'], ascending=[True, False, True])
 
     return df_harvest
