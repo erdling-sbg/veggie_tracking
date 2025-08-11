@@ -354,17 +354,19 @@ def ernteliste_table():
         most_days = df_harvest_text_veg['TageNachReife'].max()
         harvest_veg_prio = df_harvest_text_veg[df_harvest_text_veg['TageNachReife'] == most_days]
         harvest_veg_rest = df_harvest_text_veg[df_harvest_text_veg['TageNachReife'] != most_days]
-        harvest_rest_list = list(dict.fromkeys((harvest_veg_rest['BedID'].tolist())))
-        prio_beds_list = list(dict.fromkeys((harvest_veg_prio['BedID'].tolist())))
+        harvest_rest_list = harvest_veg_rest['BedID'].tolist()
+        prio_beds_list = harvest_veg_prio['BedID'].tolist()
+        prio_beds_list = [str(int(x)) for x in prio_beds_list]
+        harvest_rest_list = [str(int(x)) for x in harvest_rest_list]
+        harvest_rest_list = list(dict.fromkeys(harvest_rest_list))
+        prio_beds_list = list(dict.fromkeys(prio_beds_list))
         for prio_bed in prio_beds_list:
             if prio_bed in harvest_rest_list:
                 harvest_rest_list.remove(prio_bed)
         priority_info = str()
-        prio_beds_list = [str(int(x)) for x in prio_beds_list]
         prio_bit = str(prio_beds_list).replace("[", '').replace("]", '').replace("'", '')
         priority_info = f"<mark>{prio_bit}</mark>"
         if len(harvest_rest_list) >= 1:
-            harvest_rest_list = [str(int(x)) for x in harvest_rest_list]
             add_str_bit = str(harvest_rest_list).replace("[", '').replace("]", '').replace("'", '')
             add_str = f", <i><small>aber auch: <mark>{add_str_bit}</mark></small></i>"
             priority_info += add_str
