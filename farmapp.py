@@ -174,11 +174,11 @@ def kulturname(kultur_name):
             for prio_bed in prio_beds_list:
                 if prio_bed in harvest_rest_list:
                     harvest_rest_list.remove(prio_bed)
-            prio_beds_list = [str(x) for x in prio_beds_list]
-            harvest_rest_list = [str(x) for x in harvest_rest_list]
-            priority_info = "Ja! Hier zuerst ernten: <mark>" + str(prio_beds_list).replace("[", '').replace("]", '').replace("'", '') + "</mark>"
+            prio_bit = str(prio_beds_list).replace("[", '').replace("]", '').replace("'", '')
+            priority_info = f"Ja! Hier zuerst ernten: <mark>{prio_bit}</mark>"
             if len(harvest_rest_list) >= 1:
-                add_str = "</br> und dann in dieser Reihenfolge weiterschauen: <mark>" + str(harvest_rest_list).replace("[", '').replace("]", '').replace("'", '') + "</mark>"
+                add_str_bit = str(harvest_rest_list).replace("[", '').replace("]", '').replace("'", '')
+                add_str = f"</br> und dann in dieser Reihenfolge weiterschauen: <mark>{add_str_bit}</mark>"
                 priority_info += add_str
 
     return render_template(
@@ -357,12 +357,12 @@ def ernteliste_table():
         for prio_bed in prio_beds_list:
             if prio_bed in harvest_rest_list:
                 harvest_rest_list.remove(prio_bed)
-        prio_beds_list = [str(x) for x in prio_beds_list]
-        harvest_rest_list = [str(x) for x in harvest_rest_list]
         priority_info = str()
-        priority_info = f"""<mark>{str(prio_beds_list).replace("[", '').replace("]", '').replace("'", '')}</mark>"""
+        prio_bit = str(prio_beds_list).replace("[", '').replace("]", '').replace("'", '')
+        priority_info = f"<mark>{prio_bit}</mark>"
         if len(harvest_rest_list) >= 1:
-            add_str = f""", <i><small>aber auch: <mark>{str(harvest_rest_list).replace("[", '').replace("]", '').replace("'", '')}</mark></small></i>"""
+            add_str_bit = str(harvest_rest_list).replace("[", '').replace("]", '').replace("'", '')
+            add_str = f", <i><small>aber auch: <mark>{add_str_bit}</mark></small></i>"
             priority_info += add_str
         harvestable_dict[veggie] = priority_info
         harvest_text += f"</br>{veggie}: {priority_info}"
