@@ -252,17 +252,19 @@ def beetID(ID):
         symbol_sequence=['diamond']
     )
     dia.update_traces(marker=dict(size=12, line=dict(width=2)))
+    single_day_events = ['Kompost', 'mit Laub gemulcht']
     soil_process = px.timeline(
-        # Remove Improvement categories as bars from graphic
-        df_fig.loc[((df_fig['ImprovementName'] != 'Kompost') & (df_fig['ImprovementName'] != '') & (df_fig['ImprovementName'] != 'mit Laub gemulcht'))],
+        # Ignore single day events and empty values when creating bars
+        df_fig.loc[(~df_fig['ImprovementName'].isin(single_day_events) & (df_fig['ImprovementName'] != ''))],
         x_start="StartDate",
         x_end="EndDate",
         y="ImprovementName",
         color="ImprovementName",
         color_discrete_map = soil_improvement_colors
     )
+    # Add "points" to represent single day events
     soil_event = px.scatter(
-        df_fig.loc[((df_fig['ImprovementName'] == 'Kompost') | (df_fig['ImprovementName'] == 'mit Laub gemulcht'))],
+        df_fig.loc[df_fig['ImprovementName'].isin(single_day_events)],
         x="StartDate",
         y="ImprovementName",
         color="ImprovementName",
@@ -337,9 +339,8 @@ def beetID(ID):
 def ernteliste_table():
     df_harvest = generate_harvest_table()
     # Filter just for erntable or unknowns...
-    df_harvest = df_harvest.loc[
-        ((df_harvest['ErnteStatus'] == "1: Zum Ernten") | (df_harvest['ErnteStatus'] == "2: Keine Ahnung"))
-    ]
+    harvestable = ["1: Zum Ernten", "2: Keine Ahnung"]
+    df_harvest = df_harvest.loc[df_harvest['ErnteStatus'].isin(harvestable)]
     df_harvest = df_harvest.reset_index(drop=True)
     df_harvest = df_harvest.sort_values(by=['CropName', 'ErnteStatus', 'TageNachReife'], ascending=[True, True, False])
     df_harvest = df_harvest.reset_index(drop=True)
@@ -350,7 +351,7 @@ def ernteliste_table():
     harvestable_dict = dict.fromkeys((df_harvest_text['CropName'].tolist()))
     harvest_text = str()
     for veggie in harvestable_dict.keys():
-        # Get subseet for veggie
+        # Get subset for veggie
         df_harvest_text_veg = get_crop_from_harvest_table(df_harvest_text, veggie)
         df_harvest_text_veg = df_harvest_text_veg.sort_values(by=['TageNachReife'], ascending=[False])
         most_days = df_harvest_text_veg['TageNachReife'].max()
@@ -530,9 +531,8 @@ def generate_harvest_table():
 def get_crop_from_harvest_table(df_harvest, kultur_name):
     df_harvest = df_harvest.loc[df_harvest['CropName'] == kultur_name]
     # Filter just for erntable or unknowns...
-    df_harvest = df_harvest.loc[
-        ((df_harvest['ErnteStatus'] == "1: Zum Ernten") | (df_harvest['ErnteStatus'] == "2: Keine Ahnung"))
-    ]
+    harvestable = ["1: Zum Ernten", "2: Keine Ahnung"]
+    df_harvest = df_harvest.loc[df_harvest['ErnteStatus'].isin(harvestable)]
     df_harvest = df_harvest.reset_index(drop=True)
     # TODO: add logic depending on number of rows to prioritise what to harvest.
     return df_harvest
@@ -540,9 +540,8 @@ def get_crop_from_harvest_table(df_harvest, kultur_name):
 def get_bed_from_harvest_table(df_harvest, ID):
     df_harvest = df_harvest.loc[df_harvest['BedID'] == ID]
     # Filter just for erntable or unknowns...
-    df_harvest = df_harvest.loc[
-        ((df_harvest['ErnteStatus'] == "1: Zum Ernten") | (df_harvest['ErnteStatus'] == "2: Keine Ahnung"))
-    ]
+    harvestable = ["1: Zum Ernten", "2: Keine Ahnung"]
+    df_harvest = df_harvest.loc[df_harvest['ErnteStatus'].isin(harvestable)]
     df_harvest = df_harvest.reset_index(drop=True)
     return df_harvest
 
