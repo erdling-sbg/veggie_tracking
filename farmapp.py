@@ -1,14 +1,15 @@
-from flask import Flask, g, jsonify, request, render_template, redirect, url_for
-import os, sqlite3
+import sqlite3
+from datetime import datetime
+from flask import Flask, request, render_template, redirect, url_for
 import numpy as np
 import pandas as pd
-from datetime import datetime
 import plotly.express as px
 import plotly.graph_objects as go
 
 app = Flask(__name__)
 DATABASE = 'erdling.db'
 VIZ_START_DATE = '2024-01-01'
+TODAY = datetime.today().strftime('%Y-%m-%d')
 
 #
 # Chart Color Dictionaries
@@ -55,7 +56,7 @@ solarised_colors = {
 # Receive and check input for bedID number (0-90).
 @app.route('/',methods = ['POST', 'GET'])
 def my_form_post():
-    kultur_namen_list = get_all_planted_crops()
+    kultur_names = get_all_planted_crops()
     update_date = str(get_most_recent_update_date())
     if request.method == 'POST' and 'bid' in request.form:
         # Validate number as input.
@@ -63,11 +64,11 @@ def my_form_post():
             try:
                 bedid = int(request.form['bid'])
             except ValueError:
-                return render_template('abfrage.html', name=kultur_namen_list, update_date=update_date)
+                return render_template('abfrage.html', name=kultur_names, update_date=update_date)
             if bedid < 0:
-                return render_template('abfrage.html', name=kultur_namen_list, update_date=update_date)
+                return render_template('abfrage.html', name=kultur_names, update_date=update_date)
             elif bedid > 90:
-                return render_template('abfrage.html', name=kultur_namen_list, update_date=update_date)
+                return render_template('abfrage.html', name=kultur_names, update_date=update_date)
             else:
                 break
         return redirect(url_for('beetID', ID = str(bedid)))
@@ -77,12 +78,12 @@ def my_form_post():
             try:
                 kultur_name = str(request.form.get('kulturname'))
             except ValueError:
-                return render_template('abfrage.html', name=kultur_namen_list, update_date=update_date)
+                return render_template('abfrage.html', name=kultur_names, update_date=update_date)
             else:
                 break
-        return redirect(url_for('kulturname', kultur_name = kultur_name))
+        return redirect(url_for('kulturname', kultur_name=kultur_name))
     else:
-        return render_template('abfrage.html', name=kultur_namen_list, update_date=update_date)
+        return render_template('abfrage.html', name=kultur_names, update_date=update_date)
 
 # Go to kulturname URL to retrieve info.
 @app.route('/kulturname/<kultur_name>', methods=("POST", "GET"))
@@ -99,11 +100,10 @@ def kulturname(kultur_name):
     #
     df_fig = df_result.copy(deep=True)
     # Change to give enddate to everything for the figure (otherwise timeline bars don't display)
-    today = datetime.today().strftime('%Y-%m-%d')
     df_fig.loc[
             (df_fig['EndDate'] == '')
             , 'EndDate'
-        ] = today
+        ] = TODAY
     fig = px.timeline(
         df_fig,
         x_start="StartDate",
@@ -121,7 +121,7 @@ def kulturname(kultur_name):
         'plot_bgcolor': 'rgb(234,216,192)',
         'paper_bgcolor': 'rgba(0, 0, 0, 0)'
     })
-    fig.update_xaxes(range=[VIZ_START_DATE, f'{today}'], fixedrange=True)
+    fig.update_xaxes(range=[VIZ_START_DATE, f'{TODAY}'], fixedrange=True)
     fig.update_yaxes(fixedrange=True)
     # Points for each starting date
     dia = px.scatter(
@@ -143,12 +143,12 @@ def kulturname(kultur_name):
     x=1
     ))
     pd.set_option('colheader_justify', 'center')
-    h1_str="Kultur: {}".format(kultur_name)
+    h1_str=f"Kultur: {kultur_name}"
     anbau_cols, anbau_data = get_anbau_info(kultur_name)
     df_anbau = pd.DataFrame(anbau_data, columns=anbau_cols)
     df_anbau = df_anbau.where(df_anbau.notnull(), '')
     anbau_fig = make_anbau_figure(df_anbau, 400)
-    anbau_fig.add_vline(x=today, line_width=3, line_color="black")
+    anbau_fig.add_vline(x=TODAY, line_width=3, line_color="black")
     h1_anbau_str = f"Wann bauen die Erdlinge {kultur_name} an?"
     h1_woanbau_str = f"Wo hat man {kultur_name} angebaut?"
     #
@@ -219,11 +219,10 @@ def beetID(ID):
     df_fig = df_result.copy(deep=True)
     #df_fig = df_fig.drop(df_fig[df_fig['ImprovementName'] != ''].index)
     # Set end date to today for anything that doesn't have one
-    today = datetime.today().strftime('%Y-%m-%d')
     df_fig.loc[
             (df_fig['EndDate'] == '')
             , 'EndDate'
-        ] = today
+        ] = TODAY
     fig = px.timeline(
         df_fig.loc[df_fig['ImprovementName'] == ''],
         x_start="StartDate",
@@ -241,7 +240,7 @@ def beetID(ID):
         'plot_bgcolor': 'rgb(234,216,192)',
         'paper_bgcolor': 'rgba(0, 0, 0, 0)'
     })
-    fig.update_xaxes(range=[VIZ_START_DATE, f'{today}'], fixedrange=True)
+    fig.update_xaxes(range=[VIZ_START_DATE, f'{TODAY}'], fixedrange=True)
     fig.update_yaxes(fixedrange=True)
     dia = px.scatter(
         df_fig.loc[df_fig['ImprovementName'] == ''],
@@ -270,7 +269,7 @@ def beetID(ID):
         color="ImprovementName",
         color_discrete_map = soil_improvement_colors,
         symbol_sequence=['line-ns-open'])
-    soil_event.update_traces(marker=dict(size=12, line=dict(width=10))) 
+    soil_event.update_traces(marker=dict(size=12, line=dict(width=10)))
     # Put it all together!
     new_fig = go.Figure(data=fig.data + dia.data + soil_process.data + soil_event.data, layout=fig.layout)
     # Move legend to top.
@@ -282,7 +281,7 @@ def beetID(ID):
     x=1
     ))
     pd.set_option('colheader_justify', 'center')
-    h1_str="Beet #{}".format(ID)
+    h1_str=f"Beet #{ID}"
     # Walkthrough buttons
     # Decided not to use the function due to possible skipping of "empty" beds...
     #list_of_active_beds = get_all_active_beds()
@@ -338,10 +337,7 @@ def beetID(ID):
 @app.route('/ernteliste', methods=("POST", "GET"))
 def ernteliste_table():
     df_harvest = generate_harvest_table()
-    # Filter just for erntable or unknowns...
-    harvestable = ["1: Zum Ernten", "2: Keine Ahnung"]
-    df_harvest = df_harvest.loc[df_harvest['ErnteStatus'].isin(harvestable)]
-    df_harvest = df_harvest.reset_index(drop=True)
+    df_harvest = extract_harvestable(df_harvest)
     df_harvest = df_harvest.sort_values(by=['CropName', 'ErnteStatus', 'TageNachReife'], ascending=[True, True, False])
     df_harvest = df_harvest.reset_index(drop=True)
 
@@ -385,12 +381,11 @@ def ernteliste_table():
 
 @app.route('/anbau', methods=("POST", "GET"))
 def anbau_view():
-    today = datetime.today().strftime('%Y-%m-%d')
     anbau_cols, anbau_data = get_all_anbau_info()
     df_anbau = pd.DataFrame(anbau_data, columns=anbau_cols)
     df_anbau = df_anbau.where(df_anbau.notnull(), '')
     anbau_fig = make_anbau_figure_overview(df_anbau, 3000, grouped=False)
-    anbau_fig.add_vline(x=today, line_width=3, line_color="black")
+    anbau_fig.add_vline(x=TODAY, line_width=3, line_color="black")
     family_overview = get_family_anbau_overview(list(crop_family_colors.keys()))
     families = family_overview.keys()
     return render_template(
@@ -405,12 +400,11 @@ def anbau_view():
 # Go to kulturname URL to retrieve info.
 @app.route('/folien', methods=("POST", "GET"))
 def folien_view():
-    today = datetime.today().strftime('%Y-%m-%d')
     folien_cols, folien_data = get_all_folien()
     df_folien = pd.DataFrame(folien_data, columns=folien_cols)
     df_folien = df_folien.where(df_folien.notnull(), '')
     df_folien = df_folien.loc[df_folien['EndDate'] == '']
-    df_folien["Tage drauf"] = ((datetime.today() - pd.to_datetime(df_folien['StartDate'], format='%Y-%m-%d')).dt.days)
+    df_folien["Tage drauf"] = (datetime.today() - pd.to_datetime(df_folien['StartDate'], format='%Y-%m-%d')).dt.days
     df_folien = df_folien.drop(['EndDate'], axis=1)
     # make index match count
     df_folien= df_folien.reset_index(drop=True)
@@ -424,23 +418,23 @@ def folien_view():
         update_date = str(get_most_recent_update_date())
     )
 
-def get_planting_history_per_bed(ID):
-    sql_query = ('''SELECT Plantings.StartDate, Plantings.EndDate, Crops.CropName, Crops.AlternativeNamen, Crops.CropSorte, Crops.CropFamilie, Plantings.PlantingMethod, Plantings.Notizen
+def get_planting_history_per_bed(bid):
+    sql_query = f'''SELECT Plantings.StartDate, Plantings.EndDate, Crops.CropName, Crops.AlternativeNamen, Crops.CropSorte, Crops.CropFamilie, Plantings.PlantingMethod, Plantings.Notizen
                     FROM Plantings
                     INNER JOIN Crops
                     on Plantings.CropID = Crops.CropID
-                    WHERE Plantings.BedID = {}
-                    ORDER BY StartDate DESC;''').format(ID)
+                    WHERE Plantings.BedID = {bid}
+                    ORDER BY StartDate DESC;'''
     cols, history = connect_execute_query(sql_query)
     return cols, history
 
 def get_planting_history_per_family(family):
-    sql_query = ('''SELECT Plantings.BedID, Plantings.StartDate, Plantings.EndDate, Crops.CropName, Crops.AlternativeNamen, Crops.CropSorte, Crops.CropFamilie, Plantings.PlantingMethod, Plantings.Notizen
+    sql_query = f'''SELECT Plantings.BedID, Plantings.StartDate, Plantings.EndDate, Crops.CropName, Crops.AlternativeNamen, Crops.CropSorte, Crops.CropFamilie, Plantings.PlantingMethod, Plantings.Notizen
                     FROM Plantings
                     INNER JOIN Crops
                     on Plantings.CropID = Crops.CropID
-                    WHERE Crops.CropFamilie = "{}"
-                    ORDER BY Plantings.BedID ASC;''').format(family)
+                    WHERE Crops.CropFamilie = "{family}"
+                    ORDER BY Plantings.BedID ASC;'''
     cols, history = connect_execute_query(sql_query)
     return cols, history
 
@@ -491,7 +485,7 @@ def generate_harvest_table():
     df_harvest['TagezurReifeGesäet'] = df_harvest['TagezurReifeGesäet'].apply(pd.to_numeric, errors='coerce', downcast='integer').fillna(0)
     df_harvest['TagezurReifeGesetzt'] = df_harvest['TagezurReifeGesetzt'].apply(pd.to_numeric, errors='coerce', downcast='integer').fillna(0)
     df_harvest['TagezurReifeGesteckt'] = df_harvest['TagezurReifeGesteckt'].apply(pd.to_numeric, errors='coerce', downcast='integer').fillna(0)
-    
+
     # Get days to harvest depending on planting method
     conditions = [
         df_harvest['PlantingMethod'].eq('gesät'),
@@ -530,15 +524,16 @@ def generate_harvest_table():
 
 def get_crop_from_harvest_table(df_harvest, kultur_name):
     df_harvest = df_harvest.loc[df_harvest['CropName'] == kultur_name]
-    # Filter just for erntable or unknowns...
-    harvestable = ["1: Zum Ernten", "2: Keine Ahnung"]
-    df_harvest = df_harvest.loc[df_harvest['ErnteStatus'].isin(harvestable)]
-    df_harvest = df_harvest.reset_index(drop=True)
+    df_harvest = extract_harvestable(df_harvest)
     # TODO: add logic depending on number of rows to prioritise what to harvest.
     return df_harvest
 
-def get_bed_from_harvest_table(df_harvest, ID):
-    df_harvest = df_harvest.loc[df_harvest['BedID'] == ID]
+def get_bed_from_harvest_table(df_harvest, bid):
+    df_harvest = df_harvest.loc[df_harvest['BedID'] == bid]
+    # Filter just for erntable or unknowns...
+    return extract_harvestable(df_harvest)
+
+def extract_harvestable(df_harvest):
     # Filter just for erntable or unknowns...
     harvestable = ["1: Zum Ernten", "2: Keine Ahnung"]
     df_harvest = df_harvest.loc[df_harvest['ErnteStatus'].isin(harvestable)]
@@ -557,11 +552,11 @@ def get_family_anbau_overview(family_list):
         if family not in family_overview:
             family_overview[family] = {}
         # Sort data from database into dictionary
-        for index, row in df_result.iterrows():
+        for _index, row in df_result.iterrows():
             # Get information per row
             bedid = str(row["BedID"])
             family = row["CropFamilie"]
-            yyyy, mm, dd = row["StartDate"].split("-")
+            yyyy, _mm, _dd = row["StartDate"].split("-")
             # Create year dictionary if first time
             if yyyy not in family_overview[family]:
                 family_overview[family][yyyy] = []
@@ -572,69 +567,69 @@ def get_family_anbau_overview(family_list):
                 bed_list.append(bedid)
                 family_overview[family][yyyy] = bed_list
         for year in list(family_overview[family]):
-            anzahl_str = "{} Anzahl".format(year)
+            anzahl_str = f"{year} Anzahl"
             family_overview[family][anzahl_str] = [len(family_overview[family][year]),]
         family_overview[family] = dict(sorted(family_overview[family].items()))
     family_overview = dict(sorted(family_overview.items()))
     return family_overview
 
-def get_soil_history(ID):
-    sql_query = ('''SELECT StartDate, EndDate, ImprovementName, Notizen
+def get_soil_history(bid):
+    sql_query = f'''SELECT StartDate, EndDate, ImprovementName, Notizen
                     FROM SoilImprovements
-                    WHERE BedID = {};''').format(ID)
+                    WHERE BedID = {bid};'''
     cols, history = connect_execute_query(sql_query)
     return cols, history
 
 def get_anbau_info(crop_str):
     crop_str = str(crop_str)
     crop_str = crop_str.lower()
-    sql_query = ('''SELECT *
+    sql_query = f'''SELECT *
                     FROM AnbauInfos
-                    WHERE LOWER(CropName) LIKE "{}";''').format(crop_str)
+                    WHERE LOWER(CropName) LIKE "{crop_str}";'''
     cols, history = connect_execute_query(sql_query)
     return cols, history
 
 def get_all_anbau_info():
-    sql_query = ('''SELECT *
-                    FROM AnbauInfos;''')
+    sql_query = '''SELECT *
+                    FROM AnbauInfos;'''
     cols, history = connect_execute_query(sql_query)
     return cols, history
 
 def get_specific_crop(crop_str):
     crop_str = str(crop_str)
     crop_str = crop_str.lower()
-    sql_query = ('''SELECT BedID, StartDate, EndDate, Crops.CropName, CropSorte, CropFamilie, PlantingMethod, Plantings.Notizen
+    sql_query = f'''SELECT BedID, StartDate, EndDate, Crops.CropName, CropSorte, CropFamilie, PlantingMethod, Plantings.Notizen
                     FROM Plantings
                     INNER JOIN Crops
                     on Plantings.CropID = Crops.CropID
-                    WHERE LOWER(Crops.CropName) LIKE "{}"
-                    ORDER BY StartDate DESC;''').format(crop_str)
+                    WHERE LOWER(Crops.CropName) LIKE "{crop_str}"
+                    ORDER BY StartDate DESC;'''
     cols, history = connect_execute_query(sql_query)
     return cols, history
 
 def get_all_unharvested_crops():
-    sql_query = ('''SELECT BedID, StartDate, EndDate, Crops.CropName, CropSorte, CropFamilie, PlantingMethod, Plantings.Notizen
+    sql_query = '''SELECT BedID, StartDate, EndDate, Crops.CropName, CropSorte, CropFamilie, PlantingMethod, Plantings.Notizen
                     FROM Plantings
                     INNER JOIN Crops
                     on Plantings.CropID = Crops.CropID
                     WHERE Plantings.EndDate IS NULL
-                    ORDER BY StartDate DESC;''')
+                    ORDER BY StartDate DESC;'''
     cols, history = connect_execute_query(sql_query)
     return cols, history
 
 def get_all_planted_crops():
-    sql_query = ('''SELECT DISTINCT Crops.CropName
+    sql_query = '''SELECT DISTINCT Crops.CropName
                     FROM Plantings
                     INNER JOIN Crops
                     on Plantings.CropID = Crops.CropID
-                    ORDER BY Crops.CropName ASC;''')
-    cols, history = connect_execute_query(sql_query)
+                    ORDER BY Crops.CropName ASC;'''
+    _cols, history = connect_execute_query(sql_query)
     planted_crops = list(history)
     planted_crops = [crop[0] for crop in planted_crops]
     return planted_crops
 
 def get_all_active_beds():
-    sql_query = ('''SELECT DISTINCT BedID
+    sql_query = '''SELECT DISTINCT BedID
                         FROM (
                             SELECT BedID, EndDate
                             FROM Plantings
@@ -643,17 +638,17 @@ def get_all_active_beds():
                             FROM SoilImprovements)
                     WHERE EndDate is NULL AND BedID is NOT NULL
                     ORDER BY BedID ASC;
-                    ''')
-    cols, history = connect_execute_query(sql_query)
+                    '''
+    _cols, history = connect_execute_query(sql_query)
     tracked_beds = list(history)
     tracked_beds = [bed[0] for bed in tracked_beds]
     return tracked_beds
 
 def get_most_recent_update_date():
-    sql_query = ('''SELECT Plantings.StartDate, Plantings.EndDate, SoilImprovements.StartDate as StartDate2, SoilImprovements.EndDate as Enddate2
+    sql_query = '''SELECT Plantings.StartDate, Plantings.EndDate, SoilImprovements.StartDate as StartDate2, SoilImprovements.EndDate as Enddate2
                     FROM Plantings
                     INNER JOIN SoilImprovements
-                    on Plantings.BedID = SoilImprovements.BedID;''')
+                    on Plantings.BedID = SoilImprovements.BedID;'''
     cols, history = connect_execute_query(sql_query)
     df_dates = pd.DataFrame(history, columns=cols)
     df_dates = df_dates.where(df_dates.notnull(), '')
@@ -663,10 +658,10 @@ def get_most_recent_update_date():
     return most_recent_date
 
 def get_all_folien():
-    sql_query = ('''SELECT BedID, StartDate, EndDate, Notizen
+    sql_query = '''SELECT BedID, StartDate, EndDate, Notizen
                     FROM SoilImprovements
                     WHERE ImprovementName = "Schwarze Folie"
-                    ORDER BY StartDate DESC;''')
+                    ORDER BY StartDate DESC;'''
     cols, history = connect_execute_query(sql_query)
     return cols, history
 
@@ -696,7 +691,7 @@ def make_anbau_figure(df, height, grouped=True):
         })
     combined_figure.update_xaxes(range=['2025-01-01', '2025-12-31'], fixedrange=True)
     combined_figure.update_yaxes(autorange="reversed", fixedrange=True)
-    if grouped == True:
+    if grouped:
         combined_figure.update_layout({'barmode':'group'})
     return combined_figure
 
@@ -717,7 +712,7 @@ def make_anbau_figure_overview(df, height, grouped=True):
         })
     combined_figure.update_xaxes(range=['2025-01-01', '2025-12-31'], fixedrange=True)
     combined_figure.update_yaxes(autorange="reversed", fixedrange=True)
-    if grouped == True:
+    if grouped:
         combined_figure.update_layout({'barmode':'group'})
     return combined_figure
 
@@ -732,7 +727,7 @@ def create_anbau_partial_figure_width(df, start, end, marker_clr, bar_width=1):
         }
     )
     fig.update_traces(marker_color=marker_clr)
-    for i, d in enumerate(fig.data):
+    for _i, d in enumerate(fig.data):
         d.width = bar_width
     return fig
 
