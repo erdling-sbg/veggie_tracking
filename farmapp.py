@@ -28,7 +28,8 @@ soil_improvement_colors = {
     'Kompost': '#996600',
     'Schwarze Folie': '#000000',
     'Gründüngung': '#99ff66',
-    'Grünbrache': '#00cc99'
+    'Grünbrache': '#00cc99',
+    'mit Laub gemulcht': "#c57c5c",
 }
 solarised_colors = {
     'base03':    '#002b36',
@@ -252,7 +253,8 @@ def beetID(ID):
     )
     dia.update_traces(marker=dict(size=12, line=dict(width=2)))
     soil_process = px.timeline(
-        df_fig.loc[((df_fig['ImprovementName'] != 'Kompost') & (df_fig['ImprovementName'] != ''))],
+        # Remove Improvement categories as bars from graphic
+        df_fig.loc[((df_fig['ImprovementName'] != 'Kompost') & (df_fig['ImprovementName'] != '') & (df_fig['ImprovementName'] != 'mit Laub gemulcht'))],
         x_start="StartDate",
         x_end="EndDate",
         y="ImprovementName",
@@ -260,7 +262,7 @@ def beetID(ID):
         color_discrete_map = soil_improvement_colors
     )
     soil_event = px.scatter(
-        df_fig.loc[df_fig['ImprovementName'] == 'Kompost'],
+        df_fig.loc[((df_fig['ImprovementName'] == 'Kompost') | (df_fig['ImprovementName'] == 'mit Laub gemulcht'))],
         x="StartDate",
         y="ImprovementName",
         color="ImprovementName",
