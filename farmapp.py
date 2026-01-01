@@ -304,7 +304,7 @@ def beetID(ID):
     # Generate harvest table.
     #
     harvest_table = get_bed_from_harvest_table(generate_harvest_table(), int(ID))
-    harvest_str = f'Gibt es in diesem Beet etwas zum Ernten?'
+    harvest_str = 'Gibt es in diesem Beet etwas zum Ernten?'
     #
     # Get crops to harvest, or none.
     #
@@ -689,7 +689,7 @@ def make_anbau_figure(df, height, grouped=True):
         'paper_bgcolor': 'rgba(0, 0, 0, 0)',
         'height': height
         })
-    combined_figure.update_xaxes(range=['2025-01-01', '2025-12-31'], fixedrange=True)
+    combined_figure.update_xaxes(range=['2026-01-01', '2026-12-31'], fixedrange=True)
     combined_figure.update_yaxes(autorange="reversed", fixedrange=True)
     if grouped:
         combined_figure.update_layout({'barmode':'group'})
@@ -710,7 +710,7 @@ def make_anbau_figure_overview(df, height, grouped=True):
         'paper_bgcolor': 'rgba(0, 0, 0, 0)',
         'height': height
         })
-    combined_figure.update_xaxes(range=['2025-01-01', '2025-12-31'], fixedrange=True)
+    combined_figure.update_xaxes(range=['2026-01-01', '2026-12-31'], fixedrange=True)
     combined_figure.update_yaxes(autorange="reversed", fixedrange=True)
     if grouped:
         combined_figure.update_layout({'barmode':'group'})
