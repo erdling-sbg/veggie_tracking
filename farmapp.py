@@ -340,41 +340,48 @@ def ernteliste_table():
     df_harvest = extract_harvestable(df_harvest)
     df_harvest = df_harvest.sort_values(by=['CropName', 'ErnteStatus', 'TageNachReife'], ascending=[True, True, False])
     df_harvest = df_harvest.reset_index(drop=True)
-
+    # Get only what has something in the table...
     df_harvest_text = df_harvest.loc[
         (df_harvest['ErnteStatus'] == "1: Zum Ernten")
     ]
     harvestable_dict = dict.fromkeys((df_harvest_text['CropName'].tolist()))
-    harvest_text = str()
+    harvest_text_mid = str()
+    harvest_text_long = str()
+    harvest_text_short = str()
     for veggie in harvestable_dict.keys():
         # Get subset for veggie
         df_harvest_text_veg = get_crop_from_harvest_table(df_harvest_text, veggie)
+        # Sort by harvestables days descending (i.e. big first)
         df_harvest_text_veg = df_harvest_text_veg.sort_values(by=['TageNachReife'], ascending=[False])
-        most_days = df_harvest_text_veg['TageNachReife'].max()
-        harvest_veg_prio = df_harvest_text_veg[df_harvest_text_veg['TageNachReife'] == most_days]
-        harvest_veg_rest = df_harvest_text_veg[df_harvest_text_veg['TageNachReife'] != most_days]
-        harvest_rest_list = harvest_veg_rest['BedID'].tolist()
-        prio_beds_list = harvest_veg_prio['BedID'].tolist()
-        prio_beds_list = [str(int(x)) for x in prio_beds_list]
-        harvest_rest_list = [str(int(x)) for x in harvest_rest_list]
-        harvest_rest_list = list(dict.fromkeys(harvest_rest_list))
-        prio_beds_list = list(dict.fromkeys(prio_beds_list))
-        for prio_bed in prio_beds_list:
-            if prio_bed in harvest_rest_list:
-                harvest_rest_list.remove(prio_bed)
-        priority_info = str()
-        prio_bit = str(prio_beds_list).replace("[", '').replace("]", '').replace("'", '')
-        priority_info = f"<mark>{prio_bit}</mark>"
-        if len(harvest_rest_list) >= 1:
-            add_str_bit = str(harvest_rest_list).replace("[", '').replace("]", '').replace("'", '')
-            add_str = f", <i><small>aber auch: <mark>{add_str_bit}</mark></small></i>"
-            priority_info += add_str
-        harvestable_dict[veggie] = priority_info
-        harvest_text += f"</br>{veggie}: {priority_info}"
-
+        # Sort by harvestable categories based on time
+        harvest_veg_long = df_harvest_text_veg[df_harvest_text_veg['TageNachReife'] >= 90]
+        harvest_veg_mid = df_harvest_text_veg[
+            (df_harvest_text_veg['TageNachReife'] < 90 ) & (df_harvest_text_veg['TageNachReife'] > 10 )
+            ]
+        harvest_veg_short = df_harvest_text_veg[df_harvest_text_veg['TageNachReife'] <= 10]
+        # Collect input per crop per time category
+        prio_info_short = create_harvest_list_text(harvest_veg_short)
+        prio_info_mid = create_harvest_list_text(harvest_veg_mid)
+        prio_info_long = create_harvest_list_text(harvest_veg_long)
+        # Generate text from input
+        if prio_info_short is not None:
+            harvest_text_short += f"{veggie}: {prio_info_short}</br>"
+        if prio_info_long is not None:
+            harvest_text_long += f"{veggie}: {prio_info_long}</br>"
+        if prio_info_mid is not None:
+            harvest_text_mid += f"{veggie}: {prio_info_mid}</br>"
+    # Controll for empty categories...
+    if harvest_text_short == str():
+        harvest_text_short = "Keine Infos."
+    if harvest_text_mid == str():
+        harvest_text_mid = "Keine Infos."
+    if harvest_text_long == str():
+        harvest_text_long = "Keine Infos."
     return render_template(
         'ernteliste.html',
-        harvest_text=harvest_text,
+        harvest_text_short=harvest_text_short,
+        harvest_text=harvest_text_mid,
+        harvest_text_long=harvest_text_long,
         harvest_tables=[df_harvest.to_html(classes=['tablestyle', 'sortable'], header="true")],
         update_date = str(get_most_recent_update_date())
     )
@@ -417,6 +424,30 @@ def folien_view():
         num_tarps = num_tarps,
         update_date = str(get_most_recent_update_date())
     )
+
+def create_harvest_list_text(harvest_df):
+        if harvest_df.empty:
+            return None
+        most_days = harvest_df['TageNachReife'].max()
+        harvest_veg_prio = harvest_df[harvest_df['TageNachReife'] == most_days]
+        harvest_veg_rest = harvest_df[harvest_df['TageNachReife'] != most_days]
+        harvest_rest_list = harvest_veg_rest['BedID'].tolist()
+        prio_beds_list = harvest_veg_prio['BedID'].tolist()
+        prio_beds_list = [str(int(x)) for x in prio_beds_list]
+        harvest_rest_list = [str(int(x)) for x in harvest_rest_list]
+        harvest_rest_list = list(dict.fromkeys(harvest_rest_list))
+        prio_beds_list = list(dict.fromkeys(prio_beds_list))
+        for prio_bed in prio_beds_list:
+            if prio_bed in harvest_rest_list:
+                harvest_rest_list.remove(prio_bed)
+        priority_info = str()
+        prio_bit = str(prio_beds_list).replace("[", '').replace("]", '').replace("'", '')
+        priority_info = f"<mark>{prio_bit}</mark>"
+        if len(harvest_rest_list) >= 1:
+            add_str_bit = str(harvest_rest_list).replace("[", '').replace("]", '').replace("'", '')
+            add_str = f", <i><small>aber auch: <mark>{add_str_bit}</mark></small></i>"
+            priority_info += add_str
+        return priority_info
 
 def get_planting_history_per_bed(bid):
     sql_query = f'''SELECT Plantings.StartDate, Plantings.EndDate, Crops.CropName, Crops.AlternativeNamen, Crops.CropSorte, Crops.CropFamilie, Plantings.PlantingMethod, Plantings.Notizen
