@@ -11,7 +11,9 @@
     <i>*Ernteinfo noch in Entwicklung !!! Die Tage zur Reife sind noch allgemein pro Kultur und teilweise geschätzt.</i>
     <div style="text-align: center;">
         <div style="display: inline-block; text-align: left;">
-            <p>{{ harvest_text|safe }}</p>
+            <p><h2>Einkehrend</h2>{{ harvest_text_short|safe }}</p>
+            <p><h2>Erntbar</h2>{{ harvest_text|safe }}</p>
+            <p><h2>Länger od. Permanent</h2><h3>[erntbarkeit saisonal bedingt]</h3>{{ harvest_text_long|safe }}</p>
         </div>
     </div>
     <h3>Details</h3>
