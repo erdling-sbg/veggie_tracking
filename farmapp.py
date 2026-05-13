@@ -1,5 +1,6 @@
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timedelta
+import math
 from flask import Flask, request, render_template, redirect, url_for
 import numpy as np
 import pandas as pd
@@ -10,6 +11,7 @@ app = Flask(__name__)
 DATABASE = 'erdling.db'
 VIZ_START_DATE = '2024-01-01'
 TODAY = datetime.today().strftime('%Y-%m-%d')
+LAT_SALZBURG = 47.811195
 
 #
 # Chart Color Dictionaries
@@ -477,6 +479,25 @@ def empty_year_list_gen(min_right=0, max_right_plus_one=43, min_left=51, max_lef
         empty_year_list.append(str(x))
     return empty_year_list
 
+def days_from_start_sunlight_curve(planting_date):
+    longest_day = daylength(172, LAT_SALZBURG) # 20 or 21 of June
+    days = (datetime.strptime(planting_date, '%Y-%m-%d') - datetime.today()).days
+    days = abs(days)
+    if days == 0:
+        return 0
+    growing_days = 0
+    for i in range(1, days):
+        date_to_calculate = datetime.strptime(planting_date, '%Y-%m-%d') + timedelta(days=i)
+        day_of_year = date_to_calculate.timetuple().tm_yday
+        if day_of_year <=70 or day_of_year >= 290:
+            growing_days += 0
+        else:
+            length_hrs = daylength(day_of_year, LAT_SALZBURG)
+            growing_days += (length_hrs/longest_day)
+
+    return round(growing_days)
+
+
 def days_from_start(planting_date):
     days = (datetime.strptime(planting_date, '%Y-%m-%d') - datetime.today()).days
     days = abs(days)
@@ -512,6 +533,7 @@ def generate_harvest_table():
 
     # Calculate days from start
     df_harvest["TageNachStart"] = df_harvest.loc[:, "StartDate"].map(days_from_start)
+    df_harvest["TageNachStartSonne"] = df_harvest.loc[:, "StartDate"].map(days_from_start_sunlight_curve)
     # Fill nodata to 0.0 numeric typed
     df_harvest['TagezurReifeGesäet'] = df_harvest['TagezurReifeGesäet'].apply(pd.to_numeric, errors='coerce', downcast='integer').fillna(0)
     df_harvest['TagezurReifeGesetzt'] = df_harvest['TagezurReifeGesetzt'].apply(pd.to_numeric, errors='coerce', downcast='integer').fillna(0)
@@ -530,13 +552,13 @@ def generate_harvest_table():
     ]
     df_harvest['TagezurReife'] = np.select(conditions, choices, default=0)
     df_harvest = df_harvest.drop(columns=["TagezurReifeGesäet", "TagezurReifeGesetzt", "TagezurReifeGesteckt"])
-    df_harvest['TageNachReife'] = df_harvest['TageNachStart'] - df_harvest['TagezurReife']
+    df_harvest['TageNachReife'] = df_harvest['TageNachStartSonne'] - df_harvest['TagezurReife']
 
     # Calculate whether harvestable
     conditions = [
         (df_harvest['TagezurReife'] < 1),
-        (df_harvest['TageNachStart']>= df_harvest['TagezurReife']),
-        (df_harvest['TageNachStart'] < df_harvest['TagezurReife']) & (df_harvest['TagezurReife'] >= 1),
+        (df_harvest['TageNachStartSonne']>= df_harvest['TagezurReife']),
+        (df_harvest['TageNachStartSonne'] < df_harvest['TagezurReife']) & (df_harvest['TagezurReife'] >= 1),
     ]
     choices = [
         "2: Keine Ahnung",
@@ -548,6 +570,7 @@ def generate_harvest_table():
 
     df_harvest = df_harvest.astype({
     'TageNachStart': 'int',
+    'TageNachStartSonne': 'int',
     'TagezurReife': 'int',
     'TageNachReife': 'int',
     })
@@ -774,6 +797,43 @@ def create_anbau_partial_figure(df, start, end, marker_clr):
     )
     fig.update_traces(marker_color=marker_clr)
     return fig
+
+def daylength(dayOfYear, lat):
+    """Taken from:
+    https://gist.github.com/mluis7/4caeb4edcadcef0e74d0a7c3fde8df5c
+    but really from
+    https://gist.github.com/anttilipp/ed3ab35258c7636d87de6499475301ce
+    but using math instead of nympy.
+    
+    Computes the length of the day (the time between sunrise and
+    sunset) given the day of the year and latitude of the location.
+    Function uses the Brock model for the computations.
+    For more information see, for example,
+    Forsythe et al., "A model comparison for daylength as a
+    function of latitude and day of year", Ecological Modelling,
+    1995.
+    Parameters
+    ----------
+    dayOfYear : int
+        The day of the year. 1 corresponds to 1st of January
+        and 365 to 31st December (on a non-leap year).
+    lat : float
+        Latitude of the location in degrees. Positive values
+        for north and negative for south.
+    Returns
+    -------
+    d : float
+        Daylength in hours.
+    """
+    latInRad = math.radians(lat)
+    declinationOfEarth = 23.45*math.sin(math.radians(360.0*(283.0+dayOfYear)/365.0))
+    if -math.tan(latInRad) * math.tan(math.radians(declinationOfEarth)) <= -1.0:
+        return 24.0
+    elif -math.tan(latInRad) * math.tan(math.radians(declinationOfEarth)) >= 1.0:
+        return 0.0
+    else:
+        hourAngle = math.degrees(math.acos(-math.tan(latInRad) * math.tan(math.radians(declinationOfEarth))))
+        return 2.0*hourAngle/15.0
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
