@@ -666,7 +666,7 @@ def get_all_unharvested_crops():
                     FROM Plantings
                     INNER JOIN Crops
                     on Plantings.CropID = Crops.CropID
-                    WHERE Plantings.EndDate IS NULL
+                    WHERE Plantings.EndDate IS NULL AND Plantings.ErnteEnde IS NULL
                     ORDER BY StartDate DESC;'''
     cols, history = connect_execute_query(sql_query)
     return cols, history
