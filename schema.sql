@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS Plantings (
     StartDate DATE,
     EndDate DATE,
     PlantingMethod VARCHAR(255),
+    Quelle VARCHAR(255),
     Notizen VARCHAR(255),
     FOREIGN KEY (BedID) REFERENCES Beds(BedID),
     FOREIGN KEY (CropID) REFERENCES Crops(CropID)

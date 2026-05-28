@@ -452,7 +452,7 @@ def create_harvest_list_text(harvest_df):
         return priority_info
 
 def get_planting_history_per_bed(bid):
-    sql_query = f'''SELECT Plantings.StartDate, Plantings.EndDate, Crops.CropName, Crops.AlternativeNamen, Crops.CropSorte, Crops.CropFamilie, Plantings.PlantingMethod, Plantings.Notizen
+    sql_query = f'''SELECT Plantings.StartDate, Plantings.EndDate, Crops.CropName, Crops.AlternativeNamen, Crops.CropSorte, Crops.CropFamilie, Plantings.PlantingMethod, Plantings.Quelle, Plantings.Notizen
                     FROM Plantings
                     INNER JOIN Crops
                     on Plantings.CropID = Crops.CropID
@@ -652,7 +652,7 @@ def get_all_anbau_info():
 def get_specific_crop(crop_str):
     crop_str = str(crop_str)
     crop_str = crop_str.lower()
-    sql_query = f'''SELECT BedID, StartDate, EndDate, Crops.CropName, CropSorte, CropFamilie, PlantingMethod, Plantings.Notizen
+    sql_query = f'''SELECT BedID, StartDate, EndDate, Crops.CropName, CropSorte, CropFamilie, PlantingMethod, Quelle, Plantings.Notizen
                     FROM Plantings
                     INNER JOIN Crops
                     on Plantings.CropID = Crops.CropID
