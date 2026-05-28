@@ -20,6 +20,8 @@ CREATE TABLE IF NOT EXISTS Plantings (
     CropID INT,
     CropName VARCHAR(255),
     StartDate DATE,
+    ErnteEnde DATE,
+    SamenErnte DATE,
     EndDate DATE,
     PlantingMethod VARCHAR(255),
     Quelle VARCHAR(255),
